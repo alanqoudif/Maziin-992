@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="page-title">Security Operations Dashboard</h2>
+<section class="grid">
+  <div class="kpi"><div class="kpi-label">Total Devices</div><div class="kpi-value" id="kpiTotalDevices">{{ devices_count }}</div></div>
+  <div class="kpi"><div class="kpi-label">Total Vulnerabilities</div><div class="kpi-value" id="kpiTotalVulns">{{ vulns_count }}</div></div>
+  <div class="kpi"><div class="kpi-label">Critical Vulnerabilities</div><div class="kpi-value" id="kpiCriticalVulns">{{ critical_count }}</div></div>
+  <div class="kpi"><div class="kpi-label">Patch Compliance</div><div class="kpi-value" id="kpiPatchCompliance">--%</div></div>
+</section>
+<section class="card">
+  <h3>Real Scan Control</h3>
+  <p>
+    Current status:
+    <span id="scanStatusText" class="badge status-{{ scan_state.status }}">{{ scan_state.status }}</span>
+  </p>
+  <p id="scanErrorText" class="status-failed"></p>
+  <p>Last duration: <span id="scanDuration">{{ scan_state.duration_sec or 0 }}</span>s | Hosts: <span id="scanHosts">{{ scan_state.discovered_hosts or 0 }}</span> | Open ports: <span id="scanPorts">{{ scan_state.open_ports_count or 0 }}</span></p>
+  <p id="scanMessage">Auto-scan is enabled and runs automatically.</p>
+</section>
+<section class="grid">
+  <div class="card"><canvas id="severityChart"></canvas></div>
+  <div class="card"><canvas id="departmentChart"></canvas></div>
+</section>
+<section class="card">
+  <h3>Vulnerability Trend (Last 30 Days)</h3>
+  <canvas id="trendChart"></canvas>
+</section>
+<section class="card">
+  <h3>Top 5 Critical Devices</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Device</th>
+        <th>Department</th>
+        <th>Critical Vulns</th>
+        <th>Weighted Risk</th>
+        <th>Top CVE</th>
+      </tr>
+    </thead>
+    <tbody id="topDevicesBody">
+      <tr><td colspan="5">Loading...</td></tr>
+    </tbody>
+  </table>
+</section>
+<section class="card">
+  <h3>Recent Alerts</h3>
+  <ul id="recentAlertsList">
+    {% for alert in recent_alerts %}
+      <li>{{ alert.created_at }} - {{ alert.severity|upper }} - {{ alert.message }}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

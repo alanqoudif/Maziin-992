@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="page-title">{{ device.hostname }}</h2>
+<div class="card">
+  <p><strong>IP:</strong> {{ device.ip_address }}</p>
+  <p><strong>Type:</strong> {{ device.device_type }}</p>
+  <p><strong>Department:</strong> {{ device.department }}</p>
+  <p><strong>Criticality:</strong> {{ device.criticality }}</p>
+</div>
+<div class="card">
+  <h3>Risk Analysis</h3>
+  <p><strong>Linked Vulnerabilities:</strong> {{ analysis.linked_vulns }}</p>
+  <p><strong>Critical Vulnerabilities:</strong> {{ analysis.critical_vulns }}</p>
+  <p><strong>Highest Risk CVE:</strong> {{ analysis.highest_risk_cve }}</p>
+  <canvas id="deviceRiskRadar"></canvas>
+</div>
+<div class="card">
+  <h3>Linked Vulnerabilities</h3>
+  <ul>
+    {% for v in device.vulnerabilities %}
+      <li><a href="{{ url_for('vulnerabilities.vulnerability_detail', vuln_id=v.id) }}">{{ v.cve_id }}</a> - {{ v.title }} ({{ v.severity }})</li>
+    {% else %}
+      <li>No vulnerabilities linked yet.</li>
+    {% endfor %}
+  </ul>
+</div>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const ctx = document.getElementById("deviceRiskRadar");
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: "radar",
+      data: {
+        labels: {{ ai_factors.labels|tojson }},
+        datasets: [{ label: "AI Factors", data: {{ ai_factors.values|tojson }}, borderColor: "#4ea7ff", backgroundColor: "rgba(78,167,255,0.2)" }]
+      },
+      options: {
+        scales: { r: { suggestedMin: 0, suggestedMax: 10, pointLabels: { color: "#dce7ff" }, grid: { color: "rgba(156,176,216,0.25)" }, angleLines: { color: "rgba(156,176,216,0.25)" }, ticks: { color: "#9cb0d8", backdropColor: "transparent" } } },
+        plugins: { legend: { labels: { color: "#dce7ff" } } }
+      }
+    });
+  });
+</script>
+{% endblock %}

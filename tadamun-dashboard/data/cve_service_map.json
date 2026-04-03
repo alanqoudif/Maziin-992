@@ -1,0 +1,51 @@
+{
+  "ssh": [
+    {
+      "cve_id": "CVE-2018-15473",
+      "title": "OpenSSH user enumeration",
+      "cvss": 5.3
+    }
+  ],
+  "http": [
+    {
+      "cve_id": "CVE-2021-41773",
+      "title": "Apache path traversal",
+      "cvss": 7.5
+    }
+  ],
+  "https": [
+    {
+      "cve_id": "CVE-2021-41773",
+      "title": "Apache path traversal",
+      "cvss": 7.5
+    }
+  ],
+  "smb": [
+    {
+      "cve_id": "CVE-2017-0144",
+      "title": "SMB remote code execution",
+      "cvss": 8.1
+    }
+  ],
+  "rdp": [
+    {
+      "cve_id": "CVE-2019-0708",
+      "title": "BlueKeep remote code execution",
+      "cvss": 9.8
+    }
+  ],
+  "ftp": [
+    {
+      "cve_id": "CVE-2011-2523",
+      "title": "Backdoor command execution",
+      "cvss": 10.0
+    }
+  ],
+  "telnet": [
+    {
+      "cve_id": "CVE-1999-0619",
+      "title": "Cleartext remote administration",
+      "cvss": 9.0
+    }
+  ]
+}

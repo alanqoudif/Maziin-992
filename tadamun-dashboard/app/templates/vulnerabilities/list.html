@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="page-title">Vulnerability Risk Queue</h2>
+<section class="card">
+  <table class="datatable">
+    <thead>
+      <tr><th>CVE</th><th>Title</th><th>CVSS</th><th>AI Risk</th><th>Priority</th><th>Severity</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      {% for v in vulnerabilities %}
+        <tr>
+          <td><a href="{{ url_for('vulnerabilities.vulnerability_detail', vuln_id=v.id) }}">{{ v.cve_id }}</a></td>
+          <td>{{ v.title }}</td><td>{{ v.cvss_base_score }}</td><td>{{ v.ai_risk_score }}</td>
+          <td>{{ v.ai_priority_rank }}</td><td><span class="badge">{{ v.severity }}</span></td><td>{{ v.status }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

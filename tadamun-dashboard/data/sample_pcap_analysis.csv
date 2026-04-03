@@ -1,0 +1,5 @@
+No.,Time,Source,Destination,Protocol,Length,Info
+1,0.001,192.168.10.11,192.168.10.1,TCP,66,SYN
+2,0.010,192.168.10.11,192.168.10.1,TELNET,128,Login attempt
+3,0.200,192.168.20.25,192.168.20.1,UDP,1480,Large packet burst
+4,0.300,192.168.30.12,192.168.30.1,HTTPS,512,TLS 1.3 traffic

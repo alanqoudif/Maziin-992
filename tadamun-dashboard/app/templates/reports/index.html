@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="page-title">Reports Center</h2>
+<div class="card">
+  <p>Generate executive-ready PDFs from the latest telemetry and risk posture snapshot.</p>
+  <form action="{{ url_for('reports.executive_report') }}" method="get">
+    <label for="reportType">Report Type</label>
+    <select id="reportType" name="type">
+      <option value="executive">Executive Overview</option>
+      <option value="vulnerability">Vulnerability Deep Dive</option>
+      <option value="compliance">Compliance Assurance</option>
+    </select>
+    <label for="dateFrom">From</label>
+    <input id="dateFrom" type="date" name="date_from" required>
+    <label for="dateTo">To</label>
+    <input id="dateTo" type="date" name="date_to" required>
+    <button type="submit">Generate PDF</button>
+  </form>
+</div>
+{% endblock %}

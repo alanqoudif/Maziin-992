@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="page-title">Asset Inventory</h2>
+<section class="card">
+  <table class="datatable">
+    <thead>
+      <tr>
+        <th>Hostname</th><th>IP</th><th>Type</th><th>OS</th><th>Department</th><th>VLAN</th><th>Criticality</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in devices %}
+      <tr>
+        <td><a href="{{ url_for('devices.device_detail', device_id=d.id) }}">{{ d.hostname }}</a></td>
+        <td>{{ d.ip_address }}</td><td>{{ d.device_type }}</td><td>{{ d.os }}</td>
+        <td>{{ d.department }}</td><td>{{ d.vlan }}</td><td><span class="badge">{{ d.criticality }}</span></td><td>{{ d.status }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

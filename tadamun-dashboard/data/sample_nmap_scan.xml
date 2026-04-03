@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<nmaprun>
+  <host>
+    <status state="up"/>
+    <address addr="192.168.10.11" addrtype="ipv4"/>
+    <ports>
+      <port protocol="tcp" portid="22"><state state="open"/><service name="ssh"/></port>
+      <port protocol="tcp" portid="80"><state state="open"/><service name="http"/></port>
+      <port protocol="tcp" portid="445"><state state="open"/><service name="microsoft-ds"/></port>
+    </ports>
+  </host>
+  <host>
+    <status state="up"/>
+    <address addr="192.168.20.21" addrtype="ipv4"/>
+    <ports>
+      <port protocol="tcp" portid="3389"><state state="open"/><service name="ms-wbt-server"/></port>
+    </ports>
+  </host>
+</nmaprun>

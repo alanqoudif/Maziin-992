@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="page-title">{{ vulnerability.cve_id }}</h2>
+<div class="card">
+  <p><strong>{{ vulnerability.title }}</strong></p>
+  <p>{{ vulnerability.description }}</p>
+  <p>CVSS: {{ vulnerability.cvss_base_score }} | Severity: <span class="badge">{{ vulnerability.severity }}</span></p>
+  <p>AI Risk Score: {{ vulnerability.ai_risk_score }} | Priority Rank: {{ vulnerability.ai_priority_rank }}</p>
+  <p>Exploit Available: {{ "Yes" if vulnerability.exploit_availability else "No" }}</p>
+</div>
+<div class="card">
+  <h3>Technical Analysis</h3>
+  <p><strong>Affected Devices:</strong> {{ analysis.affected_device_count }}</p>
+  <p><strong>Current Status:</strong> {{ analysis.status }}</p>
+  <p><strong>Exploitability Outlook:</strong> {{ analysis.exploitability }}</p>
+  <canvas id="vulnRiskRadar"></canvas>
+</div>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const ctx = document.getElementById("vulnRiskRadar");
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: "radar",
+      data: {
+        labels: {{ ai_factors.labels|tojson }},
+        datasets: [{ label: "AI Factors", data: {{ ai_factors.values|tojson }}, borderColor: "#34d399", backgroundColor: "rgba(52,211,153,0.2)" }]
+      },
+      options: {
+        scales: { r: { suggestedMin: 0, suggestedMax: 10, pointLabels: { color: "#dce7ff" }, grid: { color: "rgba(156,176,216,0.25)" }, angleLines: { color: "rgba(156,176,216,0.25)" }, ticks: { color: "#9cb0d8", backdropColor: "transparent" } } },
+        plugins: { legend: { labels: { color: "#dce7ff" } } }
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="page-title">Compliance Posture</h2>
+<section class="grid">
+  <div class="kpi">
+    <div class="kpi-label">Overall Compliance</div>
+    <div class="kpi-value">{{ overall }}%</div>
+    <p class="text-muted">Weighted score across ISO, NIST, and CIS frameworks.</p>
+  </div>
+  {% for framework in frameworks %}
+  <div class="kpi">
+    <div class="kpi-label">{{ framework.title }}</div>
+    <div class="kpi-value">{{ framework.score }}%</div>
+    <p class="text-muted">{{ framework.done_controls }}/{{ framework.total_controls }} controls evidenced</p>
+  </div>
+  {% endfor %}
+</section>
+{% for framework in frameworks %}
+<section class="card">
+  <h3>{{ framework.title }} Checklist</h3>
+  <p class="text-muted">Weight: {{ (framework.weight * 100)|int }}% | Calculation: {{ framework.done_controls }}/{{ framework.total_controls }} controls = {{ framework.score }}%</p>
+  <div class="progress-track">
+    <div class="progress-fill" style="width: {{ framework.score }}%"></div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Control Domain</th>
+        <th>Progress</th>
+        <th>Evidence Coverage</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for control in framework.controls %}
+      <tr>
+        <td>{{ control.name }}</td>
+        <td>{{ control.done }}/{{ control.total }}</td>
+        <td>{{ ((control.done / control.total) * 100)|round|int }}%</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endfor %}
+{% endblock %}

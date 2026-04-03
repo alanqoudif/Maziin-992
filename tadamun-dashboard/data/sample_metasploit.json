@@ -1,0 +1,7 @@
+{
+  "results": [
+    {"cve_id": "CVE-2023-23397", "host": "192.168.10.11", "exploitable": true},
+    {"cve_id": "CVE-2021-44228", "host": "192.168.10.14", "exploitable": true},
+    {"cve_id": "CVE-2022-30190", "host": "192.168.20.22", "exploitable": false}
+  ]
+}

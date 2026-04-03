@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h2>Create user</h2>
+  <form method="post">
+    <input name="username" placeholder="Username" required>
+    <input name="email" type="email" placeholder="Email" required>
+    <input name="password" type="password" placeholder="Password" required>
+    <select name="role">
+      <option value="admin">admin</option>
+      <option value="security_analyst">security_analyst</option>
+      <option value="network_admin">network_admin</option>
+      <option value="viewer">viewer</option>
+    </select>
+    <label><input type="checkbox" name="mfa_enabled"> MFA Enabled</label>
+    <button type="submit">Register</button>
+  </form>
+</section>
+{% endblock %}

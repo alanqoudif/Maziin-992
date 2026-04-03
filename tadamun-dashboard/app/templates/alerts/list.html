@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="page-title">SOC Alerts</h2>
+<section class="card">
+  <table class="datatable">
+    <thead><tr><th>Type</th><th>Severity</th><th>Message</th><th>Created</th><th>Read</th></tr></thead>
+    <tbody>
+    {% for a in alerts %}
+      <tr><td>{{ a.alert_type }}</td><td><span class="badge">{{ a.severity }}</span></td><td>{{ a.message }}</td><td>{{ a.created_at }}</td><td>{{ a.is_read }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="page-title">Patch Operations</h2>
+<section class="card">
+  <table class="datatable">
+    <thead><tr><th>Patch</th><th>Vendor</th><th>Urgency</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      {% for p in patches %}
+        <tr><td>{{ p.patch_name }}</td><td>{{ p.vendor }}</td><td><span class="badge">{{ p.urgency }}</span></td><td>{{ p.status }}</td><td>{{ p.recommendation }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
