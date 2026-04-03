@@ -18,13 +18,40 @@ Academic graduation project for MEC focused on simulated cybersecurity operation
 - DB: SQLite (default), PostgreSQL supported via `DATABASE_URL`
 
 ## Quick Start
-```bash
-pip install -r requirements.txt
-python seed_data.py
-python run.py
-```
+
+**Prerequisites:** Python 3.10+ recommended. On macOS with Homebrew, use `python3` (the `python` / `pip` commands may be missing). Homebrew’s Python is *externally managed* (PEP 668), so install dependencies inside a project virtual environment—not with system-wide `pip`.
+
+1. **Clone and enter the project directory**
+
+2. **Create and activate a virtual environment**
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate   # macOS / Linux
+   ```
+   On Windows (PowerShell): `.venv\Scripts\Activate.ps1`
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Environment variables (optional but recommended)**  
+   Copy `.env.example` to `.env` and adjust values (e.g. `SECRET_KEY`, `NMAP_BINARY_PATH` if you use real scans).
+
+5. **Seed the database and ML artifacts**
+   ```bash
+   python seed_data.py
+   ```
+   This can take several minutes on first run.
+
+6. **Run the app**
+   ```bash
+   python run.py
+   ```
 
 Open [http://127.0.0.1:5000](http://127.0.0.1:5000)
+
+**Tip:** After `source .venv/bin/activate`, `python` and `pip` refer to the venv. To leave the venv: `deactivate`.
 
 ## Default Users
 - admin / admin
