@@ -1,20 +1,58 @@
 {% extends "base.html" %}
 {% block content %}
-<h2 class="page-title">Reports Center</h2>
-<div class="card">
-  <p>Generate executive-ready PDFs from the latest telemetry and risk posture snapshot.</p>
-  <form action="{{ url_for('reports.executive_report') }}" method="get">
-    <label for="reportType">Report Type</label>
-    <select id="reportType" name="type">
-      <option value="executive">Executive Overview</option>
-      <option value="vulnerability">Vulnerability Deep Dive</option>
-      <option value="compliance">Compliance Assurance</option>
-    </select>
-    <label for="dateFrom">From</label>
-    <input id="dateFrom" type="date" name="date_from" required>
-    <label for="dateTo">To</label>
-    <input id="dateTo" type="date" name="date_to" required>
-    <button type="submit">Generate PDF</button>
-  </form>
+<div class="flex items-center justify-between space-y-2 mb-6">
+  <h2 class="text-3xl font-bold tracking-tight">Reports Center</h2>
+</div>
+
+<div class="max-w-2xl mx-auto">
+  <div class="rounded-xl border bg-card text-card-foreground shadow">
+    <div class="p-6 flex flex-col space-y-1.5 pb-2">
+      <h3 class="font-semibold leading-none tracking-tight text-lg">Generate Executive Report</h3>
+      <p class="text-sm text-muted-foreground">Create executive-ready PDFs from the latest city-wide telemetry and risk posture snapshots.</p>
+    </div>
+    <div class="p-6 pt-0">
+      <form action="{{ url_for('reports.executive_report') }}" method="get" class="space-y-6 mt-4">
+        <div class="space-y-2">
+          <label class="text-sm font-medium leading-none" for="reportType">Report Type</label>
+          <select 
+            id="reportType" name="type"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <option value="executive">Executive Overview</option>
+            <option value="vulnerability">Vulnerability Deep Dive</option>
+            <option value="compliance">Compliance Assurance</option>
+          </select>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <label class="text-sm font-medium leading-none" for="dateFrom">Date From</label>
+            <input 
+              id="dateFrom" type="date" name="date_from" required
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-medium leading-none" for="dateTo">Date To</label>
+            <input 
+              id="dateTo" type="date" name="date_to" required
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+          </div>
+        </div>
+
+        <button 
+          type="submit" 
+          class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full"
+        >
+          Generate PDF Report
+        </button>
+      </form>
+    </div>
+  </div>
+  
+  <div class="mt-8 rounded-lg border border-accent/20 bg-accent/5 p-4 text-sm text-muted-foreground text-center italic">
+    Reports are generated in PDF format and include automated AI-driven mitigation recommendations.
+  </div>
 </div>
 {% endblock %}

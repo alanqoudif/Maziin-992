@@ -1,29 +1,111 @@
 {% extends "base.html" %}
 {% block content %}
-<h2 class="page-title">{{ device.hostname }}</h2>
-<div class="card">
-  <p><strong>IP:</strong> {{ device.ip_address }}</p>
-  <p><strong>Type:</strong> {{ device.device_type }}</p>
-  <p><strong>Department:</strong> {{ device.department }}</p>
-  <p><strong>Criticality:</strong> {{ device.criticality }}</p>
+<div class="flex items-center justify-between space-y-2 mb-6">
+  <div class="space-y-1">
+    <h2 class="text-3xl font-bold tracking-tight">{{ device.hostname }}</h2>
+    <p class="text-muted-foreground">{{ device.ip_address }} • {{ device.department }}</p>
+  </div>
+  <div class="flex items-center gap-2">
+    <span class="inline-flex items-center rounded-full border px-3 py-1 text-sm font-semibold bg-secondary text-secondary-foreground">
+      {{ device.status|upper }}
+    </span>
+  </div>
 </div>
-<div class="card">
-  <h3>Risk Analysis</h3>
-  <p><strong>Linked Vulnerabilities:</strong> {{ analysis.linked_vulns }}</p>
-  <p><strong>Critical Vulnerabilities:</strong> {{ analysis.critical_vulns }}</p>
-  <p><strong>Highest Risk CVE:</strong> {{ analysis.highest_risk_cve }}</p>
-  <canvas id="deviceRiskRadar"></canvas>
+
+<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+  <div class="lg:col-span-2 space-y-6">
+    <div class="rounded-xl border bg-card text-card-foreground shadow">
+      <div class="p-6 flex flex-col space-y-1.5 pb-2 border-b">
+        <h3 class="font-semibold leading-none tracking-tight text-lg">Linked Vulnerabilities</h3>
+      </div>
+      <div class="p-0">
+        <div class="relative w-full overflow-auto">
+          <table class="w-full caption-bottom text-sm">
+            <thead class="[&_tr]:border-b">
+              <tr class="border-b transition-colors hover:bg-muted/50">
+                <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">CVE</th>
+                <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Title</th>
+                <th class="h-10 px-4 text-right align-middle font-medium text-muted-foreground">Severity</th>
+              </tr>
+            </thead>
+            <tbody class="[&_tr:last-child]:border-0">
+              {% for v in device.vulnerabilities %}
+              <tr class="border-b transition-colors hover:bg-muted/50">
+                <td class="p-4 align-middle font-medium">
+                  <a href="{{ url_for('vulnerabilities.vulnerability_detail', vuln_id=v.id) }}" class="text-primary hover:underline">
+                    {{ v.cve_id }}
+                  </a>
+                </td>
+                <td class="p-4 align-middle max-w-[200px] truncate">{{ v.title }}</td>
+                <td class="p-4 align-middle text-right">
+                  {% set sev_class = 'bg-destructive/10 text-destructive' if v.severity == 'critical' or v.severity == 'high' else 'bg-secondary text-secondary-foreground' %}
+                  <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold border-transparent {{ sev_class }}">
+                    {{ v.severity|upper }}
+                  </span>
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="3" class="p-4 text-center text-muted-foreground italic">No vulnerabilities linked yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-xl border bg-card text-card-foreground shadow">
+      <div class="p-6 flex flex-col space-y-1.5 pb-2 border-b">
+        <h3 class="font-semibold leading-none tracking-tight text-lg">System Information</h3>
+      </div>
+      <div class="p-6 grid grid-cols-2 gap-4">
+        <div class="space-y-1">
+          <p class="text-xs text-muted-foreground uppercase font-bold">Operating System</p>
+          <p class="text-lg font-semibold">{{ device.os }}</p>
+        </div>
+        <div class="space-y-1">
+          <p class="text-xs text-muted-foreground uppercase font-bold">Device Type</p>
+          <p class="text-lg font-semibold">{{ device.device_type }}</p>
+        </div>
+        <div class="space-y-1 pt-2 border-t mt-2">
+          <p class="text-xs text-muted-foreground uppercase font-bold">VLAN ID</p>
+          <p class="text-sm font-mono">{{ device.vlan }}</p>
+        </div>
+        <div class="space-y-1 pt-2 border-t mt-2">
+          <p class="text-xs text-muted-foreground uppercase font-bold">Criticality Level</p>
+          <p class="text-sm font-semibold">{{ device.criticality }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <div class="rounded-xl border bg-card text-card-foreground shadow">
+      <div class="p-6 flex flex-col space-y-1.5 pb-2 border-b">
+        <h3 class="font-semibold leading-none tracking-tight text-lg">Asset Risk Analysis</h3>
+      </div>
+      <div class="p-6">
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div class="text-center p-3 rounded-lg bg-muted/50">
+            <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Total Vulns</p>
+            <p class="text-2xl font-bold">{{ analysis.linked_vulns }}</p>
+          </div>
+          <div class="text-center p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+            <p class="text-xs text-destructive uppercase font-bold mb-1">Critical</p>
+            <p class="text-2xl font-bold text-destructive">{{ analysis.critical_vulns }}</p>
+          </div>
+        </div>
+        <div class="h-[250px]">
+          <canvas id="deviceRiskRadar"></canvas>
+        </div>
+        <div class="mt-4 pt-4 border-t text-center">
+          <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Highest Risk CVE</p>
+          <p class="text-sm font-mono font-bold text-accent">{{ analysis.highest_risk_cve }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-<div class="card">
-  <h3>Linked Vulnerabilities</h3>
-  <ul>
-    {% for v in device.vulnerabilities %}
-      <li><a href="{{ url_for('vulnerabilities.vulnerability_detail', vuln_id=v.id) }}">{{ v.cve_id }}</a> - {{ v.title }} ({{ v.severity }})</li>
-    {% else %}
-      <li>No vulnerabilities linked yet.</li>
-    {% endfor %}
-  </ul>
-</div>
+
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     const ctx = document.getElementById("deviceRiskRadar");
@@ -31,12 +113,33 @@
     new Chart(ctx, {
       type: "radar",
       data: {
-        labels: {{ ai_factors.labels|tojson }},
-        datasets: [{ label: "AI Factors", data: {{ ai_factors.values|tojson }}, borderColor: "#4ea7ff", backgroundColor: "rgba(78,167,255,0.2)" }]
+        labels: {{ ai_factors["labels"]|tojson }},
+        datasets: [{ 
+          label: "Asset Factors", 
+          data: {{ ai_factors["values"]|tojson }}, 
+          borderColor: "#3b82f6", 
+          backgroundColor: "rgba(59,130,246,0.2)",
+          pointBackgroundColor: "#3b82f6",
+          pointBorderColor: "#fff",
+          pointHoverBackgroundColor: "#fff",
+          pointHoverBorderColor: "#3b82f6"
+        }]
       },
       options: {
-        scales: { r: { suggestedMin: 0, suggestedMax: 10, pointLabels: { color: "#dce7ff" }, grid: { color: "rgba(156,176,216,0.25)" }, angleLines: { color: "rgba(156,176,216,0.25)" }, ticks: { color: "#9cb0d8", backdropColor: "transparent" } } },
-        plugins: { legend: { labels: { color: "#dce7ff" } } }
+        scales: { 
+          r: { 
+            suggestedMin: 0, 
+            suggestedMax: 10, 
+            pointLabels: { color: "#94a3b8", font: { size: 10 } }, 
+            grid: { color: "rgba(30,41,59,0.5)" }, 
+            angleLines: { color: "rgba(30,41,59,0.5)" }, 
+            ticks: { display: false } 
+          } 
+        },
+        plugins: { 
+          legend: { display: false } 
+        },
+        maintainAspectRatio: false
       }
     });
   });

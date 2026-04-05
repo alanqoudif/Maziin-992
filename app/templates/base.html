@@ -1,36 +1,123 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tadamun Smart City Security Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-dt@1.13.8/css/jquery.dataTables.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            border: "hsl(217.2 32.6% 17.5%)",
+            input: "hsl(217.2 32.6% 17.5%)",
+            ring: "hsl(212.7 26.8% 83.9%)",
+            background: "hsl(222.2 84% 4.9%)",
+            foreground: "hsl(210 40% 98%)",
+            primary: {
+              DEFAULT: "hsl(210 40% 98%)",
+              foreground: "hsl(222.2 47.4% 11.2%)",
+            },
+            secondary: {
+              DEFAULT: "hsl(217.2 32.6% 17.5%)",
+              foreground: "hsl(210 40% 98%)",
+            },
+            destructive: {
+              DEFAULT: "hsl(0 62.8% 30.6%)",
+              foreground: "hsl(210 40% 98%)",
+            },
+            muted: {
+              DEFAULT: "hsl(217.2 32.6% 17.5%)",
+              foreground: "hsl(215 20.2% 65.1%)",
+            },
+            accent: {
+              DEFAULT: "hsl(217.2 32.6% 17.5%)",
+              foreground: "hsl(210 40% 98%)",
+            },
+            popover: {
+              DEFAULT: "hsl(222.2 84% 4.9%)",
+              foreground: "hsl(210 40% 98%)",
+            },
+            card: {
+              DEFAULT: "hsl(222.2 84% 4.9%)",
+              foreground: "hsl(210 40% 98%)",
+            },
+          },
+        }
+      }
+    }
+  </script>
 </head>
-<body>
-  <header class="topbar">
-    <h1>Tadamun SOC Dashboard</h1>
-    <nav>
-      <a href="{{ url_for('dashboard.index') }}">Dashboard</a>
-      <a href="{{ url_for('devices.list_devices') }}">Devices</a>
-      <a href="{{ url_for('vulnerabilities.list_vulnerabilities') }}">Vulnerabilities</a>
-      <a href="{{ url_for('patches.list_patches') }}">Patches</a>
-      <a href="{{ url_for('alerts.list_alerts') }}">Alerts</a>
-      <a href="{{ url_for('compliance.index') }}">Compliance</a>
-      <a href="{{ url_for('reports.index') }}">Reports</a>
-      <a href="{{ url_for('auth.logout') }}">Logout</a>
-    </nav>
+<body class="bg-background text-foreground font-[Inter] antialiased min-h-screen">
+  <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div class="container flex h-16 items-center justify-between px-6 mx-auto max-w-7xl">
+      <div class="flex items-center gap-6 md:gap-10">
+        <a class="flex items-center space-x-2" href="{{ url_for('dashboard.index') }}">
+          <span class="inline-block font-bold text-lg tracking-tight">TADAMUN <span class="text-muted-foreground font-normal">SOC</span></span>
+        </a>
+        <nav class="hidden md:flex gap-1">
+          {% set nav_items = [
+            ('dashboard.index', 'Dashboard'),
+            ('devices.list_devices', 'Devices'),
+            ('vulnerabilities.list_vulnerabilities', 'Vulnerabilities'),
+            ('patches.list_patches', 'Patches'),
+            ('alerts.list_alerts', 'Alerts'),
+            ('compliance.index', 'Compliance'),
+            ('reports.index', 'Reports')
+          ] %}
+          {% for endpoint, label in nav_items %}
+            <a 
+              href="{{ url_for(endpoint) }}" 
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 {{ 'bg-accent text-accent-foreground' if request.endpoint == endpoint else 'text-muted-foreground hover:text-foreground' }}"
+            >
+              {{ label }}
+            </a>
+          {% endfor %}
+        </nav>
+      </div>
+      <div class="flex items-center gap-2">
+        <a 
+          href="{{ url_for('auth.logout') }}" 
+          class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
+        >
+          Logout
+        </a>
+      </div>
+    </div>
   </header>
-  <main class="container">
+
+  <main class="container py-8 px-6 mx-auto max-w-7xl">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        {% for category, message in messages %}
-          <div class="card">{{ category|upper }} - {{ message }}</div>
-        {% endfor %}
+        <div class="space-y-4 mb-6">
+          {% for category, message in messages %}
+            <div class="rounded-lg border px-4 py-3 text-sm flex items-center justify-between 
+              {{ 'bg-destructive/10 border-destructive/50 text-destructive' if category == 'error' else 'bg-muted border-border text-foreground' }}">
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        </div>
       {% endif %}
     {% endwith %}
+
     {% block content %}{% endblock %}
   </main>
+
+  <footer class="border-t py-6 md:px-8 md:py-0">
+    <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row px-6 mx-auto max-w-7xl">
+      <p class="text-center text-sm leading-loose text-muted-foreground md:text-left">
+        &copy; 2026 Tadamun Smart City Vulnerability Prioritization Dashboard.
+      </p>
+    </div>
+  </footer>
+
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.8/js/jquery.dataTables.min.js"></script>

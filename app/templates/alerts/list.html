@@ -1,14 +1,51 @@
 {% extends "base.html" %}
 {% block content %}
-<h2 class="page-title">SOC Alerts</h2>
-<section class="card">
-  <table class="datatable">
-    <thead><tr><th>Type</th><th>Severity</th><th>Message</th><th>Created</th><th>Read</th></tr></thead>
-    <tbody>
-    {% for a in alerts %}
-      <tr><td>{{ a.alert_type }}</td><td><span class="badge">{{ a.severity }}</span></td><td>{{ a.message }}</td><td>{{ a.created_at }}</td><td>{{ a.is_read }}</td></tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</section>
+<div class="flex items-center justify-between space-y-2 mb-6">
+  <h2 class="text-3xl font-bold tracking-tight">SOC Alerts</h2>
+</div>
+
+<div class="rounded-xl border bg-card text-card-foreground shadow">
+  <div class="p-6 flex flex-col space-y-1.5 pb-2">
+    <h3 class="font-semibold leading-none tracking-tight text-lg">Real-time Event Log</h3>
+    <p class="text-sm text-muted-foreground">Notifications and automated security alerts from city-wide sensors</p>
+  </div>
+  <div class="p-6 pt-0">
+    <div class="relative w-full overflow-auto">
+      <table class="datatable w-full caption-bottom text-sm">
+        <thead>
+          <tr class="border-b transition-colors hover:bg-muted/50">
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Alert Type</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Severity</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Message</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Timestamp</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">State</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in alerts %}
+          <tr class="border-b transition-colors hover:bg-muted/50 {{ 'opacity-60' if a.is_read }}">
+            <td class="p-4 align-middle font-medium">{{ a.alert_type }}</td>
+            <td class="p-4 align-middle">
+              <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent {{ 'bg-destructive/10 text-destructive' if a.severity == 'critical' or a.severity == 'high' else 'bg-secondary text-secondary-foreground' }}">
+                {{ a.severity }}
+              </span>
+            </td>
+            <td class="p-4 align-middle text-sm">{{ a.message }}</td>
+            <td class="p-4 align-middle text-xs text-muted-foreground font-mono">{{ a.created_at }}</td>
+            <td class="p-4 align-middle text-center">
+              {% if a.is_read %}
+                <span class="text-xs text-muted-foreground italic">Read</span>
+              {% else %}
+                <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-accent text-white">
+                  NEW
+                </span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 {% endblock %}

@@ -1,20 +1,94 @@
 {% extends "base.html" %}
 {% block content %}
-<h2 class="page-title">{{ vulnerability.cve_id }}</h2>
-<div class="card">
-  <p><strong>{{ vulnerability.title }}</strong></p>
-  <p>{{ vulnerability.description }}</p>
-  <p>CVSS: {{ vulnerability.cvss_base_score }} | Severity: <span class="badge">{{ vulnerability.severity }}</span></p>
-  <p>AI Risk Score: {{ vulnerability.ai_risk_score }} | Priority Rank: {{ vulnerability.ai_priority_rank }}</p>
-  <p>Exploit Available: {{ "Yes" if vulnerability.exploit_availability else "No" }}</p>
+<div class="flex items-center justify-between space-y-2 mb-6">
+  <div class="space-y-1">
+    <h2 class="text-3xl font-bold tracking-tight">{{ vulnerability.cve_id }}</h2>
+    <p class="text-muted-foreground">{{ vulnerability.title }}</p>
+  </div>
+  <div class="flex items-center gap-2">
+    {% set sev_class = 'bg-destructive/10 text-destructive' if vulnerability.severity == 'critical' or vulnerability.severity == 'high' else 'bg-secondary text-secondary-foreground' %}
+    <span class="inline-flex items-center rounded-full border px-3 py-1 text-sm font-semibold {{ sev_class }}">
+      {{ vulnerability.severity|upper }}
+    </span>
+  </div>
 </div>
-<div class="card">
-  <h3>Technical Analysis</h3>
-  <p><strong>Affected Devices:</strong> {{ analysis.affected_device_count }}</p>
-  <p><strong>Current Status:</strong> {{ analysis.status }}</p>
-  <p><strong>Exploitability Outlook:</strong> {{ analysis.exploitability }}</p>
-  <canvas id="vulnRiskRadar"></canvas>
+
+<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+  <div class="lg:col-span-2 space-y-6">
+    <div class="rounded-xl border bg-card text-card-foreground shadow">
+      <div class="p-6 flex flex-col space-y-1.5 pb-2 border-b">
+        <h3 class="font-semibold leading-none tracking-tight text-lg">Vulnerability Description</h3>
+      </div>
+      <div class="p-6">
+        <p class="text-sm leading-relaxed text-muted-foreground">
+          {{ vulnerability.description }}
+        </p>
+      </div>
+    </div>
+
+    <div class="rounded-xl border bg-card text-card-foreground shadow">
+      <div class="p-6 flex flex-col space-y-1.5 pb-2 border-b">
+        <h3 class="font-semibold leading-none tracking-tight text-lg">Technical Analysis</h3>
+      </div>
+      <div class="p-6 grid grid-cols-2 gap-4">
+        <div class="space-y-1">
+          <p class="text-xs text-muted-foreground uppercase font-bold">Affected Devices</p>
+          <p class="text-lg font-semibold">{{ analysis.affected_device_count }}</p>
+        </div>
+        <div class="space-y-1">
+          <p class="text-xs text-muted-foreground uppercase font-bold">Current Status</p>
+          <p class="text-lg font-semibold">{{ analysis.status }}</p>
+        </div>
+        <div class="col-span-2 space-y-1 pt-2 border-t mt-2">
+          <p class="text-xs text-muted-foreground uppercase font-bold">Exploitability Outlook</p>
+          <p class="text-sm italic text-foreground">{{ analysis.exploitability }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <div class="rounded-xl border bg-card text-card-foreground shadow">
+      <div class="p-6 flex flex-col space-y-1.5 pb-2 border-b">
+        <h3 class="font-semibold leading-none tracking-tight text-lg">AI Risk Profile</h3>
+      </div>
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div class="space-y-1">
+            <p class="text-xs text-muted-foreground uppercase font-bold">Risk Score</p>
+            <p class="text-3xl font-bold text-accent">{{ vulnerability.ai_risk_score }}</p>
+          </div>
+          <div class="text-right space-y-1">
+            <p class="text-xs text-muted-foreground uppercase font-bold">Priority Rank</p>
+            <p class="text-3xl font-bold">#{{ vulnerability.ai_priority_rank }}</p>
+          </div>
+        </div>
+        <div class="h-[250px] mt-4">
+          <canvas id="vulnRiskRadar"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-xl border bg-card text-card-foreground shadow">
+      <div class="p-6 flex flex-col space-y-1.5 pb-2 border-b">
+        <h3 class="font-semibold leading-none tracking-tight text-sm">Key Metrics</h3>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-muted-foreground">CVSS Base Score</span>
+          <span class="font-mono font-bold">{{ vulnerability.cvss_base_score }}</span>
+        </div>
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-muted-foreground">Exploit Available</span>
+          <span class="font-semibold {{ 'text-destructive' if vulnerability.exploit_availability else 'text-muted-foreground' }}">
+            {{ "Yes" if vulnerability.exploit_availability else "No" }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     const ctx = document.getElementById("vulnRiskRadar");
@@ -22,12 +96,33 @@
     new Chart(ctx, {
       type: "radar",
       data: {
-        labels: {{ ai_factors.labels|tojson }},
-        datasets: [{ label: "AI Factors", data: {{ ai_factors.values|tojson }}, borderColor: "#34d399", backgroundColor: "rgba(52,211,153,0.2)" }]
+        labels: {{ ai_factors["labels"]|tojson }},
+        datasets: [{ 
+          label: "AI Risk Factors", 
+          data: {{ ai_factors["values"]|tojson }}, 
+          borderColor: "#3b82f6", 
+          backgroundColor: "rgba(59,130,246,0.2)",
+          pointBackgroundColor: "#3b82f6",
+          pointBorderColor: "#fff",
+          pointHoverBackgroundColor: "#fff",
+          pointHoverBorderColor: "#3b82f6"
+        }]
       },
       options: {
-        scales: { r: { suggestedMin: 0, suggestedMax: 10, pointLabels: { color: "#dce7ff" }, grid: { color: "rgba(156,176,216,0.25)" }, angleLines: { color: "rgba(156,176,216,0.25)" }, ticks: { color: "#9cb0d8", backdropColor: "transparent" } } },
-        plugins: { legend: { labels: { color: "#dce7ff" } } }
+        scales: { 
+          r: { 
+            suggestedMin: 0, 
+            suggestedMax: 10, 
+            pointLabels: { color: "#94a3b8", font: { size: 10 } }, 
+            grid: { color: "rgba(30,41,59,0.5)" }, 
+            angleLines: { color: "rgba(30,41,59,0.5)" }, 
+            ticks: { display: false } 
+          } 
+        },
+        plugins: { 
+          legend: { display: false } 
+        },
+        maintainAspectRatio: false
       }
     });
   });

@@ -1,20 +1,60 @@
 {% extends "base.html" %}
 {% block content %}
-<h2 class="page-title">Vulnerability Risk Queue</h2>
-<section class="card">
-  <table class="datatable">
-    <thead>
-      <tr><th>CVE</th><th>Title</th><th>CVSS</th><th>AI Risk</th><th>Priority</th><th>Severity</th><th>Status</th></tr>
-    </thead>
-    <tbody>
-      {% for v in vulnerabilities %}
-        <tr>
-          <td><a href="{{ url_for('vulnerabilities.vulnerability_detail', vuln_id=v.id) }}">{{ v.cve_id }}</a></td>
-          <td>{{ v.title }}</td><td>{{ v.cvss_base_score }}</td><td>{{ v.ai_risk_score }}</td>
-          <td>{{ v.ai_priority_rank }}</td><td><span class="badge">{{ v.severity }}</span></td><td>{{ v.status }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</section>
+<div class="flex items-center justify-between space-y-2 mb-6">
+  <h2 class="text-3xl font-bold tracking-tight">Vulnerability Risk Queue</h2>
+</div>
+
+<div class="rounded-xl border bg-card text-card-foreground shadow">
+  <div class="p-6 flex flex-col space-y-1.5 pb-2">
+    <h3 class="font-semibold leading-none tracking-tight text-lg">AI-Prioritized Findings</h3>
+    <p class="text-sm text-muted-foreground">Vulnerabilities analyzed and ranked based on smart city contextual risk</p>
+  </div>
+  <div class="p-6 pt-0">
+    <div class="relative w-full overflow-auto">
+      <table class="datatable w-full caption-bottom text-sm">
+        <thead>
+          <tr class="border-b transition-colors hover:bg-muted/50">
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">CVE ID</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Title</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">CVSS</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">AI Risk</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Priority</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Severity</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in vulnerabilities %}
+          <tr class="border-b transition-colors hover:bg-muted/50">
+            <td class="p-4 align-middle">
+              <a href="{{ url_for('vulnerabilities.vulnerability_detail', vuln_id=v.id) }}" class="font-medium hover:underline text-primary">
+                {{ v.cve_id }}
+              </a>
+            </td>
+            <td class="p-4 align-middle max-w-[200px] truncate">{{ v.title }}</td>
+            <td class="p-4 align-middle font-mono text-xs">{{ v.cvss_base_score }}</td>
+            <td class="p-4 align-middle font-mono text-xs text-accent">{{ v.ai_risk_score }}</td>
+            <td class="p-4 align-middle">
+              <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground">
+                Rank: {{ v.ai_priority_rank }}
+              </span>
+            </td>
+            <td class="p-4 align-middle">
+              {% set sev_class = 'bg-destructive/10 text-destructive' if v.severity == 'critical' or v.severity == 'high' else 'bg-secondary text-secondary-foreground' %}
+              <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent {{ sev_class }}">
+                {{ v.severity }}
+              </span>
+            </td>
+            <td class="p-4 align-middle">
+              <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-muted text-muted-foreground">
+                {{ v.status }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 {% endblock %}

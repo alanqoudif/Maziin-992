@@ -1,19 +1,79 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="card">
-  <h2>Create user</h2>
-  <form method="post">
-    <input name="username" placeholder="Username" required>
-    <input name="email" type="email" placeholder="Email" required>
-    <input name="password" type="password" placeholder="Password" required>
-    <select name="role">
-      <option value="admin">admin</option>
-      <option value="security_analyst">security_analyst</option>
-      <option value="network_admin">network_admin</option>
-      <option value="viewer">viewer</option>
-    </select>
-    <label><input type="checkbox" name="mfa_enabled"> MFA Enabled</label>
-    <button type="submit">Register</button>
-  </form>
-</section>
+<div class="flex flex-col items-center justify-center py-10">
+  <div class="w-full max-w-[500px] space-y-6">
+    <div class="flex flex-col space-y-2 text-center">
+      <h1 class="text-2xl font-semibold tracking-tight">Create User</h1>
+      <p class="text-sm text-muted-foreground">
+        Add a new analyst to the Tadamun Smart City team
+      </p>
+    </div>
+
+    <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+      <form method="post" class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <label class="text-sm font-medium leading-none" for="username">Username</label>
+            <input 
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" 
+              id="username" name="username" placeholder="jdoe" required
+            >
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-medium leading-none" for="role">Role</label>
+            <select 
+              name="role" id="role"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <option value="admin">Admin</option>
+              <option value="security_analyst">Security Analyst</option>
+              <option value="network_admin">Network Admin</option>
+              <option value="viewer">Viewer</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-medium leading-none" for="email">Email</label>
+          <input 
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" 
+            id="email" name="email" type="email" placeholder="jdoe@tadamun.gov" required
+          >
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-medium leading-none" for="password">Password</label>
+          <input 
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" 
+            id="password" name="password" type="password" placeholder="••••••••" required
+          >
+        </div>
+
+        <div class="flex items-center space-x-2 py-2">
+          <input 
+            type="checkbox" name="mfa_enabled" id="mfa_enabled"
+            class="h-4 w-4 rounded border-input bg-background text-primary focus:ring-ring focus:ring-offset-background"
+          >
+          <label for="mfa_enabled" class="text-sm font-medium leading-none">
+            Enable Multi-Factor Authentication (MFA)
+          </label>
+        </div>
+
+        <button 
+          type="submit" 
+          class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full"
+        >
+          Register User
+        </button>
+      </form>
+    </div>
+
+    <p class="px-8 text-center text-sm text-muted-foreground">
+      Already have an account? 
+      <a class="underline underline-offset-4 hover:text-primary" href="{{ url_for('auth.login') }}">
+        Sign in
+      </a>
+    </p>
+  </div>
+</div>
 {% endblock %}

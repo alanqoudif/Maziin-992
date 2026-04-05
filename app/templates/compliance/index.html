@@ -1,45 +1,79 @@
 {% extends "base.html" %}
 {% block content %}
-<h2 class="page-title">Compliance Posture</h2>
-<section class="grid">
-  <div class="kpi">
-    <div class="kpi-label">Overall Compliance</div>
-    <div class="kpi-value">{{ overall }}%</div>
-    <p class="text-muted">Weighted score across ISO, NIST, and CIS frameworks.</p>
+<div class="flex items-center justify-between space-y-2 mb-6">
+  <h2 class="text-3xl font-bold tracking-tight">Compliance Posture</h2>
+</div>
+
+<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+  <div class="rounded-xl border bg-card text-card-foreground shadow">
+    <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+      <h3 class="tracking-tight text-sm font-medium">Overall Compliance</h3>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="h-4 w-4 text-ok"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
+    </div>
+    <div class="p-6 pt-0">
+      <div class="text-2xl font-bold text-ok">{{ overall }}%</div>
+      <p class="text-xs text-muted-foreground italic">Weighted score across all frameworks</p>
+    </div>
   </div>
   {% for framework in frameworks %}
-  <div class="kpi">
-    <div class="kpi-label">{{ framework.title }}</div>
-    <div class="kpi-value">{{ framework.score }}%</div>
-    <p class="text-muted">{{ framework.done_controls }}/{{ framework.total_controls }} controls evidenced</p>
+  <div class="rounded-xl border bg-card text-card-foreground shadow">
+    <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+      <h3 class="tracking-tight text-sm font-medium">{{ framework.title }}</h3>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="h-4 w-4 text-muted-foreground"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+    </div>
+    <div class="p-6 pt-0">
+      <div class="text-2xl font-bold">{{ framework.score }}%</div>
+      <p class="text-xs text-muted-foreground">{{ framework.done_controls }}/{{ framework.total_controls }} controls evidenced</p>
+    </div>
   </div>
   {% endfor %}
-</section>
-{% for framework in frameworks %}
-<section class="card">
-  <h3>{{ framework.title }} Checklist</h3>
-  <p class="text-muted">Weight: {{ (framework.weight * 100)|int }}% | Calculation: {{ framework.done_controls }}/{{ framework.total_controls }} controls = {{ framework.score }}%</p>
-  <div class="progress-track">
-    <div class="progress-fill" style="width: {{ framework.score }}%"></div>
+</div>
+
+<div class="grid gap-6">
+  {% for framework in frameworks %}
+  <div class="rounded-xl border bg-card text-card-foreground shadow">
+    <div class="p-6 flex flex-col space-y-1.5 pb-4 border-b">
+      <div class="flex items-center justify-between">
+        <h3 class="font-semibold leading-none tracking-tight text-lg">{{ framework.title }} Checklist</h3>
+        <span class="text-xs font-mono text-muted-foreground">Weight: {{ (framework.weight * 100)|int }}%</span>
+      </div>
+      <div class="mt-4 space-y-2">
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-muted-foreground">Progress: {{ framework.done_controls }}/{{ framework.total_controls }} controls</span>
+          <span class="font-bold">{{ framework.score }}%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width: {{ framework.score }}%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="p-6 pt-0">
+      <div class="relative w-full overflow-auto">
+        <table class="w-full caption-bottom text-sm">
+          <thead>
+            <tr class="border-b transition-colors hover:bg-muted/50">
+              <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Control Domain</th>
+              <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
+              <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground text-right">Coverage</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for control in framework.controls %}
+            <tr class="border-b transition-colors hover:bg-muted/50">
+              <td class="p-3 align-middle font-medium">{{ control.name }}</td>
+              <td class="p-3 align-middle text-muted-foreground text-xs">{{ control.done }}/{{ control.total }} Evidence Items</td>
+              <td class="p-3 align-middle text-right">
+                <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold border-transparent bg-secondary text-secondary-foreground">
+                  {{ ((control.done / control.total) * 100)|round|int }}%
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
-  <table>
-    <thead>
-      <tr>
-        <th>Control Domain</th>
-        <th>Progress</th>
-        <th>Evidence Coverage</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for control in framework.controls %}
-      <tr>
-        <td>{{ control.name }}</td>
-        <td>{{ control.done }}/{{ control.total }}</td>
-        <td>{{ ((control.done / control.total) * 100)|round|int }}%</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</section>
-{% endfor %}
+  {% endfor %}
+</div>
 {% endblock %}

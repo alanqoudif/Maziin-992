@@ -1,53 +1,163 @@
 {% extends "base.html" %}
 {% block content %}
-<h2 class="page-title">Security Operations Dashboard</h2>
-<section class="grid">
-  <div class="kpi"><div class="kpi-label">Total Devices</div><div class="kpi-value" id="kpiTotalDevices">{{ devices_count }}</div></div>
-  <div class="kpi"><div class="kpi-label">Total Vulnerabilities</div><div class="kpi-value" id="kpiTotalVulns">{{ vulns_count }}</div></div>
-  <div class="kpi"><div class="kpi-label">Critical Vulnerabilities</div><div class="kpi-value" id="kpiCriticalVulns">{{ critical_count }}</div></div>
-  <div class="kpi"><div class="kpi-label">Patch Compliance</div><div class="kpi-value" id="kpiPatchCompliance">--%</div></div>
-</section>
-<section class="card">
-  <h3>Real Scan Control</h3>
-  <p>
-    Current status:
-    <span id="scanStatusText" class="badge status-{{ scan_state.status }}">{{ scan_state.status }}</span>
-  </p>
-  <p id="scanErrorText" class="status-failed"></p>
-  <p>Last duration: <span id="scanDuration">{{ scan_state.duration_sec or 0 }}</span>s | Hosts: <span id="scanHosts">{{ scan_state.discovered_hosts or 0 }}</span> | Open ports: <span id="scanPorts">{{ scan_state.open_ports_count or 0 }}</span></p>
-  <p id="scanMessage">Auto-scan is enabled and runs automatically.</p>
-</section>
-<section class="grid">
-  <div class="card"><canvas id="severityChart"></canvas></div>
-  <div class="card"><canvas id="departmentChart"></canvas></div>
-</section>
-<section class="card">
-  <h3>Vulnerability Trend (Last 30 Days)</h3>
-  <canvas id="trendChart"></canvas>
-</section>
-<section class="card">
-  <h3>Top 5 Critical Devices</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Device</th>
-        <th>Department</th>
-        <th>Critical Vulns</th>
-        <th>Weighted Risk</th>
-        <th>Top CVE</th>
-      </tr>
-    </thead>
-    <tbody id="topDevicesBody">
-      <tr><td colspan="5">Loading...</td></tr>
-    </tbody>
-  </table>
-</section>
-<section class="card">
-  <h3>Recent Alerts</h3>
-  <ul id="recentAlertsList">
-    {% for alert in recent_alerts %}
-      <li>{{ alert.created_at }} - {{ alert.severity|upper }} - {{ alert.message }}</li>
-    {% endfor %}
-  </ul>
-</section>
+<div class="flex items-center justify-between space-y-2 mb-6">
+  <h2 class="text-3xl font-bold tracking-tight">Security Operations Dashboard</h2>
+</div>
+
+<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+  <div class="rounded-xl border bg-card text-card-foreground shadow">
+    <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+      <h3 class="tracking-tight text-sm font-medium">Total Devices</h3>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="h-4 w-4 text-muted-foreground"><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" /></svg>
+    </div>
+    <div class="p-6 pt-0">
+      <div class="text-2xl font-bold" id="kpiTotalDevices">{{ devices_count }}</div>
+      <p class="text-xs text-muted-foreground">Across all smart city sectors</p>
+    </div>
+  </div>
+  <div class="rounded-xl border bg-card text-card-foreground shadow">
+    <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+      <h3 class="tracking-tight text-sm font-medium">Total Vulnerabilities</h3>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="h-4 w-4 text-muted-foreground"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+    </div>
+    <div class="p-6 pt-0">
+      <div class="text-2xl font-bold" id="kpiTotalVulns">{{ vulns_count }}</div>
+      <p class="text-xs text-muted-foreground">Open security findings</p>
+    </div>
+  </div>
+  <div class="rounded-xl border bg-card text-card-foreground shadow">
+    <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+      <h3 class="tracking-tight text-sm font-medium">Critical Vulnerabilities</h3>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="h-4 w-4 text-destructive"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+    </div>
+    <div class="p-6 pt-0">
+      <div class="text-2xl font-bold text-destructive" id="kpiCriticalVulns">{{ critical_count }}</div>
+      <p class="text-xs text-muted-foreground">Requiring immediate action</p>
+    </div>
+  </div>
+  <div class="rounded-xl border bg-card text-card-foreground shadow">
+    <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+      <h3 class="tracking-tight text-sm font-medium">Patch Compliance</h3>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="h-4 w-4 text-ok"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
+    </div>
+    <div class="p-6 pt-0">
+      <div class="text-2xl font-bold text-ok" id="kpiPatchCompliance">--%</div>
+      <p class="text-xs text-muted-foreground">Successful remediation rate</p>
+    </div>
+  </div>
+</div>
+
+<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-7 mb-8">
+  <div class="col-span-4 rounded-xl border bg-card text-card-foreground shadow">
+    <div class="p-6 flex flex-col space-y-1.5 pb-2">
+      <h3 class="font-semibold leading-none tracking-tight text-lg">Real Scan Control</h3>
+      <p class="text-sm text-muted-foreground">Live simulation status and control</p>
+    </div>
+    <div class="p-6 pt-0 space-y-4">
+      <div class="flex items-center gap-4">
+        <span class="text-sm font-medium">Status:</span>
+        <span id="scanStatusText" class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground">
+          {{ scan_state.status }}
+        </span>
+        <span id="scanErrorText" class="text-xs text-destructive"></span>
+      </div>
+      <div class="grid grid-cols-3 gap-4 py-2 border-y">
+        <div class="text-center">
+          <p class="text-xs text-muted-foreground uppercase font-semibold">Duration</p>
+          <p class="text-lg font-bold"><span id="scanDuration">{{ scan_state.duration_sec or 0 }}</span>s</p>
+        </div>
+        <div class="text-center border-x">
+          <p class="text-xs text-muted-foreground uppercase font-semibold">Hosts</p>
+          <p class="text-lg font-bold"><span id="scanHosts">{{ scan_state.discovered_hosts or 0 }}</span></p>
+        </div>
+        <div class="text-center">
+          <p class="text-xs text-muted-foreground uppercase font-semibold">Open Ports</p>
+          <p class="text-lg font-bold"><span id="scanPorts">{{ scan_state.open_ports_count or 0 }}</span></p>
+        </div>
+      </div>
+      <p id="scanMessage" class="text-sm text-muted-foreground italic">Auto-scan is enabled and runs automatically.</p>
+    </div>
+  </div>
+
+  <div class="col-span-3 rounded-xl border bg-card text-card-foreground shadow">
+    <div class="p-6 flex flex-col space-y-1.5 pb-2">
+      <h3 class="font-semibold leading-none tracking-tight text-lg">Severity Distribution</h3>
+      <p class="text-sm text-muted-foreground">Vulnerabilities by risk level</p>
+    </div>
+    <div class="p-6 pt-0 h-[200px]">
+      <canvas id="severityChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-7 mb-8">
+  <div class="col-span-4 rounded-xl border bg-card text-card-foreground shadow">
+    <div class="p-6 flex flex-col space-y-1.5 pb-2">
+      <h3 class="font-semibold leading-none tracking-tight text-lg">Vulnerability Trend</h3>
+      <p class="text-sm text-muted-foreground">Frequency of findings over the last 30 days</p>
+    </div>
+    <div class="p-6 pt-0 h-[300px]">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+
+  <div class="col-span-3 rounded-xl border bg-card text-card-foreground shadow">
+    <div class="p-6 flex flex-col space-y-1.5 pb-2">
+      <h3 class="font-semibold leading-none tracking-tight text-lg">Departmental Risk</h3>
+      <p class="text-sm text-muted-foreground">Critical findings per smart city sector</p>
+    </div>
+    <div class="p-6 pt-0 h-[300px]">
+      <canvas id="departmentChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+  <div class="col-span-4 rounded-xl border bg-card text-card-foreground shadow">
+    <div class="p-6 flex flex-col space-y-1.5 pb-2">
+      <h3 class="font-semibold leading-none tracking-tight text-lg">Top 5 Critical Devices</h3>
+      <p class="text-sm text-muted-foreground">Assets requiring immediate remediation</p>
+    </div>
+    <div class="p-6 pt-0">
+      <div class="relative w-full overflow-auto">
+        <table class="w-full caption-bottom text-sm">
+          <thead class="[&_tr]:border-b">
+            <tr class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+              <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Device</th>
+              <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Department</th>
+              <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Critical Vulns</th>
+              <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Weighted Risk</th>
+              <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Top CVE</th>
+            </tr>
+          </thead>
+          <tbody id="topDevicesBody" class="[&_tr:last-child]:border-0">
+            <tr class="border-b transition-colors hover:bg-muted/50"><td colspan="5" class="p-4 align-middle text-center text-muted-foreground">Loading assets...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-span-3 rounded-xl border bg-card text-card-foreground shadow">
+    <div class="p-6 flex flex-col space-y-1.5 pb-2">
+      <h3 class="font-semibold leading-none tracking-tight text-lg">Recent SOC Alerts</h3>
+      <p class="text-sm text-muted-foreground">Latest system notifications</p>
+    </div>
+    <div class="p-6 pt-0">
+      <div class="space-y-4" id="recentAlertsList">
+        {% for alert in recent_alerts %}
+          <div class="flex items-start gap-4 rounded-lg border p-3">
+            <div class="mt-1 h-2 w-2 rounded-full {{ 'bg-destructive' if alert.severity == 'critical' or alert.severity == 'high' else 'bg-ok' }}"></div>
+            <div class="grid gap-1">
+              <p class="text-sm font-medium leading-none">{{ alert.message }}</p>
+              <p class="text-xs text-muted-foreground">{{ alert.created_at }}</p>
+            </div>
+          </div>
+        {% else %}
+          <p class="text-sm text-muted-foreground text-center py-4">No active alerts</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

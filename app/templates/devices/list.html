@@ -1,22 +1,57 @@
 {% extends "base.html" %}
 {% block content %}
-<h2 class="page-title">Asset Inventory</h2>
-<section class="card">
-  <table class="datatable">
-    <thead>
-      <tr>
-        <th>Hostname</th><th>IP</th><th>Type</th><th>OS</th><th>Department</th><th>VLAN</th><th>Criticality</th><th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for d in devices %}
-      <tr>
-        <td><a href="{{ url_for('devices.device_detail', device_id=d.id) }}">{{ d.hostname }}</a></td>
-        <td>{{ d.ip_address }}</td><td>{{ d.device_type }}</td><td>{{ d.os }}</td>
-        <td>{{ d.department }}</td><td>{{ d.vlan }}</td><td><span class="badge">{{ d.criticality }}</span></td><td>{{ d.status }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</section>
+<div class="flex items-center justify-between space-y-2 mb-6">
+  <h2 class="text-3xl font-bold tracking-tight">Asset Inventory</h2>
+</div>
+
+<div class="rounded-xl border bg-card text-card-foreground shadow">
+  <div class="p-6 flex flex-col space-y-1.5 pb-2">
+    <h3 class="font-semibold leading-none tracking-tight text-lg">Smart City Assets</h3>
+    <p class="text-sm text-muted-foreground">Comprehensive inventory of all connected devices and infrastructure</p>
+  </div>
+  <div class="p-6 pt-0">
+    <div class="relative w-full overflow-auto">
+      <table class="datatable w-full caption-bottom text-sm">
+        <thead>
+          <tr class="border-b transition-colors hover:bg-muted/50">
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Hostname</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">IP Address</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Type</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">OS</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Department</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">VLAN</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Criticality</th>
+            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in devices %}
+          <tr class="border-b transition-colors hover:bg-muted/50">
+            <td class="p-4 align-middle">
+              <a href="{{ url_for('devices.device_detail', device_id=d.id) }}" class="font-medium hover:underline text-primary">
+                {{ d.hostname }}
+              </a>
+            </td>
+            <td class="p-4 align-middle font-mono text-xs">{{ d.ip_address }}</td>
+            <td class="p-4 align-middle">{{ d.device_type }}</td>
+            <td class="p-4 align-middle">{{ d.os }}</td>
+            <td class="p-4 align-middle">{{ d.department }}</td>
+            <td class="p-4 align-middle">{{ d.vlan }}</td>
+            <td class="p-4 align-middle">
+              <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground">
+                {{ d.criticality }}
+              </span>
+            </td>
+            <td class="p-4 align-middle">
+              <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-ok/10 text-ok">
+                {{ d.status }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 {% endblock %}
