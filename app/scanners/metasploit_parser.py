@@ -1,7 +1,19 @@
 import json
 
-
 def parse_metasploit_json(raw_json: str):
     data = json.loads(raw_json)
-    exploitable = [i for i in data.get("results", []) if i.get("exploitable") is True]
-    return {"total": len(data.get("results", [])), "exploitable": exploitable, "exploitable_count": len(exploitable)}
+    results = data.get("exploit_results", [])
+    
+    vulnerable = [r for r in results if r.get("result") == "vulnerable"]
+    not_vulnerable = [r for r in results if r.get("result") == "not_vulnerable"]
+    error = [r for r in results if r.get("result") == "error"]
+    
+    return {
+        "scan_info": data.get("scan_info", {}),
+        "results": results,
+        "total": len(results),
+        "vulnerable_count": len(vulnerable),
+        "not_vulnerable_count": len(not_vulnerable),
+        "error_count": len(error),
+        "vulnerable": vulnerable
+    }

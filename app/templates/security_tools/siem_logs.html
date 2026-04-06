@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h2 class="text-3xl font-bold tracking-tight">SIEM Log Aggregation</h2>
+</div>
+
+<div class="grid gap-6 md:grid-cols-3 mb-8">
+  <div class="rounded-xl border bg-card text-card-foreground shadow p-6">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Total Security Events</p>
+    <p class="text-3xl font-bold">{{ stats.total }}</p>
+  </div>
+  <div class="rounded-xl border bg-card text-card-foreground shadow p-6">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Critical Events (24h)</p>
+    <p class="text-3xl font-bold text-destructive">{{ stats.critical }}</p>
+  </div>
+  <div class="rounded-xl border bg-card text-card-foreground shadow p-6">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Active Threats</p>
+    <p class="text-3xl font-bold text-accent">{{ stats.high }}</p>
+  </div>
+</div>
+
+<div class="rounded-xl border bg-card shadow overflow-hidden">
+  <div class="p-6 border-b flex items-center justify-between">
+    <h3 class="font-semibold">Security Event Feed</h3>
+    <div class="flex gap-2">
+        <select class="text-xs bg-background border rounded px-2 py-1">
+            <option>All Sources</option>
+            <option>Firewall</option>
+            <option>IDS/IPS</option>
+            <option>Endpoint</option>
+        </select>
+        <button class="text-xs px-3 py-1 bg-accent text-accent-foreground rounded">Refresh</button>
+    </div>
+  </div>
+  <div class="p-0">
+    <table id="siemTable" class="w-full text-xs">
+      <thead>
+        <tr class="bg-muted/50 border-b">
+          <th class="text-left py-3 px-4">Timestamp</th>
+          <th class="text-left py-3 px-4">Severity</th>
+          <th class="text-left py-3 px-4">Source</th>
+          <th class="text-left py-3 px-4">Event Type</th>
+          <th class="text-left py-3 px-4">Source IP</th>
+          <th class="text-left py-3 px-4">Message</th>
+          <th class="text-left py-3 px-4">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in events %}
+        <tr class="border-b hover:bg-muted/20 transition-colors">
+          <td class="py-3 px-4 font-mono text-muted-foreground">{{ event.timestamp.strftime('%H:%M:%S.%f')[:-3] }}</td>
+          <td class="py-3 px-4">
+            {% set s_class = 'text-destructive' if event.severity == 'critical' else 'text-accent' if event.severity == 'high' else 'text-muted-foreground' %}
+            <span class="font-bold uppercase {{ s_class }}">{{ event.severity }}</span>
+          </td>
+          <td class="py-3 px-4 font-bold">{{ event.source }}</td>
+          <td class="py-3 px-4">{{ event.event_type }}</td>
+          <td class="py-3 px-4 font-mono">{{ event.source_ip }}</td>
+          <td class="py-3 px-4 max-w-xs truncate">{{ event.message }}</td>
+          <td class="py-3 px-4">
+              <button onclick="alert(`Raw Log:\n{{ event.raw_log }}`)" class="text-accent hover:underline">Details</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="mt-8 rounded-xl border bg-black text-green-500 shadow p-6 font-mono text-xs overflow-y-auto max-h-[300px]">
+    <p class="mb-2 border-b border-green-900 pb-1 text-green-700"># LIVE IDS DETECTION LOGS</p>
+    {% for event in events[:20] %}
+    {% if event.source == 'IDS/IPS' %}
+    <p class="mb-1">[{{ event.timestamp.strftime('%m/%d-%H:%M:%S') }}] [**] [1:2024917:2] {{ event.message }} [**] src: {{ event.source_ip }} -> dst: {{ event.dest_ip }}</p>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<script>
+  $(document).ready(function() {
+    $('#siemTable').DataTable({
+        "order": [[0, "desc"]],
+        "pageLength": 25
+    });
+  });
+</script>
+{% endblock %}

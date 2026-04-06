@@ -76,6 +76,36 @@
         </div>
       </div>
     </div>
+
+    <div class="rounded-xl border bg-card text-card-foreground shadow">
+      <div class="p-6 flex flex-col space-y-1.5 pb-2 border-b">
+        <h3 class="font-semibold leading-none tracking-tight text-lg">Discovered Services (Real Scan)</h3>
+      </div>
+      <div class="p-0">
+        <div class="relative w-full overflow-auto">
+          <table class="w-full caption-bottom text-sm">
+            <thead class="[&_tr]:border-b">
+              <tr class="border-b transition-colors hover:bg-muted/50">
+                <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Port</th>
+                <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Service</th>
+                <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Product/Version</th>
+              </tr>
+            </thead>
+            <tbody class="[&_tr:last-child]:border-0">
+              {% for port in device.open_ports %}
+              <tr class="border-b transition-colors hover:bg-muted/50">
+                <td class="p-4 align-middle font-mono font-bold text-blue-400">{{ port.port }}/{{ port.protocol }}</td>
+                <td class="p-4 align-middle font-medium">{{ port.service }}</td>
+                <td class="p-4 align-middle text-muted-foreground text-xs">{{ port.product }} {{ port.version }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="3" class="p-4 text-center text-muted-foreground italic text-xs">No port data available. Run a real scan to discover services.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="space-y-6">

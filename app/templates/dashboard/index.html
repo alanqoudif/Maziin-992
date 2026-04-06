@@ -2,6 +2,10 @@
 {% block content %}
 <div class="flex items-center justify-between space-y-2 mb-6">
   <h2 class="text-3xl font-bold tracking-tight">Security Operations Dashboard</h2>
+  <div class="flex items-center gap-2">
+    <span class="text-sm font-medium text-muted-foreground">Network Health:</span>
+    <div class="h-4 w-4 rounded-full shadow-lg {{ 'bg-green-500' if health_status == 'green' else 'bg-yellow-500' if health_status == 'yellow' else 'bg-destructive animate-pulse' }}"></div>
+  </div>
 </div>
 
 <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -37,45 +41,106 @@
   </div>
   <div class="rounded-xl border bg-card text-card-foreground shadow">
     <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
-      <h3 class="tracking-tight text-sm font-medium">Patch Compliance</h3>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="h-4 w-4 text-ok"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
+      <h3 class="tracking-tight text-sm font-medium">MITRE Coverage</h3>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="h-4 w-4 text-accent"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
     </div>
     <div class="p-6 pt-0">
-      <div class="text-2xl font-bold text-ok" id="kpiPatchCompliance">--%</div>
-      <p class="text-xs text-muted-foreground">Successful remediation rate</p>
+      <div class="text-2xl font-bold text-accent">{{ mitre_coverage }}%</div>
+      <p class="text-xs text-muted-foreground">Tactics covered by vulns</p>
     </div>
   </div>
+</div>
+
+<div class="grid gap-4 md:grid-cols-3 mb-8">
+  <a href="{{ url_for('security_tools.nmap_results') }}" class="rounded-xl border bg-card p-6 shadow hover:bg-muted/50 transition-all flex items-center justify-between group">
+      <div>
+          <p class="font-bold">Latest Nmap Scan</p>
+          <p class="text-xs text-muted-foreground">Check recent device discovery</p>
+      </div>
+      <div class="text-accent group-hover:translate-x-1 transition-transform">→</div>
+  </a>
+  <a href="{{ url_for('security_tools.traffic_analysis') }}" class="rounded-xl border bg-card p-6 shadow hover:bg-muted/50 transition-all flex items-center justify-between group">
+      <div>
+          <p class="font-bold">Traffic Anomalies</p>
+          <p class="text-xs text-muted-foreground">Detect unusual network flows</p>
+      </div>
+      <div class="text-destructive group-hover:translate-x-1 transition-transform">→</div>
+  </a>
+  <a href="{{ url_for('security_tools.exploit_verification') }}" class="rounded-xl border bg-card p-6 shadow hover:bg-muted/50 transition-all flex items-center justify-between group">
+      <div>
+          <p class="font-bold">Unverified Exploits</p>
+          <p class="text-xs text-muted-foreground">Review Metasploit test results</p>
+      </div>
+      <div class="text-accent group-hover:translate-x-1 transition-transform">→</div>
+  </a>
 </div>
 
 <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-7 mb-8">
   <div class="col-span-4 rounded-xl border bg-card text-card-foreground shadow">
     <div class="p-6 flex flex-col space-y-1.5 pb-2">
-      <h3 class="font-semibold leading-none tracking-tight text-lg">Real Scan Control</h3>
-      <p class="text-sm text-muted-foreground">Live simulation status and control</p>
+      <h3 class="font-semibold leading-none tracking-tight text-lg">🔍 Network Scanner</h3>
+      <p class="text-sm text-muted-foreground">Real-time device discovery on your local network</p>
     </div>
     <div class="p-6 pt-0 space-y-4">
-      <div class="flex items-center gap-4">
-        <span class="text-sm font-medium">Status:</span>
-        <span id="scanStatusText" class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground">
-          {{ scan_state.status }}
-        </span>
-        <span id="scanErrorText" class="text-xs text-destructive"></span>
-      </div>
-      <div class="grid grid-cols-3 gap-4 py-2 border-y">
-        <div class="text-center">
-          <p class="text-xs text-muted-foreground uppercase font-semibold">Duration</p>
-          <p class="text-lg font-bold"><span id="scanDuration">{{ scan_state.duration_sec or 0 }}</span>s</p>
+      <!-- Network Info -->
+      <div id="network-info" class="grid grid-cols-2 gap-4 text-sm border-b pb-4">
+        <div>
+          <p class="text-muted-foreground">Your IP:</p>
+          <p id="local-ip" class="font-mono font-bold">Detecting...</p>
         </div>
-        <div class="text-center border-x">
-          <p class="text-xs text-muted-foreground uppercase font-semibold">Hosts</p>
-          <p class="text-lg font-bold"><span id="scanHosts">{{ scan_state.discovered_hosts or 0 }}</span></p>
+        <div>
+          <p class="text-muted-foreground">Network CIDR:</p>
+          <p id="network-cidr" class="font-mono font-bold">Detecting...</p>
         </div>
-        <div class="text-center">
-          <p class="text-xs text-muted-foreground uppercase font-semibold">Open Ports</p>
-          <p class="text-lg font-bold"><span id="scanPorts">{{ scan_state.open_ports_count or 0 }}</span></p>
+        <div class="col-span-2">
+          <p class="text-muted-foreground">Nmap Status:</p>
+          <p id="nmap-status" class="text-xs">Checking...</p>
         </div>
       </div>
-      <p id="scanMessage" class="text-sm text-muted-foreground italic">Auto-scan is enabled and runs automatically.</p>
+      
+      <!-- Scan Controls -->
+      <div class="flex flex-wrap items-center gap-3">
+        <input type="text" id="scan-target" placeholder="e.g. 192.168.1.0/24" 
+               class="flex h-9 w-[180px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+        
+        <select id="scan-type" class="flex h-9 w-[140px] items-center justify-between rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+          <option value="quick" class="bg-background text-foreground">Quick Scan</option>
+          <option value="normal" selected class="bg-background text-foreground">Normal Scan</option>
+          <option value="deep" class="bg-background text-foreground">Deep Scan</option>
+        </select>
+        
+        <button id="btn-start-scan" onclick="startRealScan()" 
+                class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-green-600 text-white shadow hover:bg-green-700 h-9 px-4">
+          ▶ Start Scan
+        </button>
+        
+        <button id="btn-stop-scan" onclick="location.reload()" 
+                class="hidden inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 h-9 px-4">
+          ■ Stop
+        </button>
+      </div>
+      
+      <!-- Progress -->
+      <div id="scan-progress" class="hidden space-y-2">
+        <div class="w-full bg-secondary rounded-full h-4 overflow-hidden">
+          <div id="progress-bar" class="bg-green-500 h-full text-[10px] font-bold text-center flex items-center justify-center transition-all duration-500" style="width: 0%">
+            0%
+          </div>
+        </div>
+        <p id="scan-message" class="text-xs text-muted-foreground italic text-center">Initializing...</p>
+      </div>
+      
+      <!-- Results Summary -->
+      <div id="scan-results-summary" class="hidden grid grid-cols-2 gap-4 py-2 border-t">
+        <div class="text-center">
+          <p class="text-[10px] text-muted-foreground uppercase font-bold">Hosts Found</p>
+          <p id="result-hosts" class="text-xl font-bold text-green-500">0</p>
+        </div>
+        <div class="text-center">
+          <p class="text-[10px] text-muted-foreground uppercase font-bold">Open Ports</p>
+          <p id="result-ports" class="text-xl font-bold text-blue-500">0</p>
+        </div>
+      </div>
     </div>
   </div>
 

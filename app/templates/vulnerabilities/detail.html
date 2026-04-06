@@ -6,10 +6,19 @@
     <p class="text-muted-foreground">{{ vulnerability.title }}</p>
   </div>
   <div class="flex items-center gap-2">
+    {% if is_confirmed %}
+    <span class="inline-flex items-center rounded-full bg-destructive/20 border border-destructive/50 px-3 py-1 text-sm font-bold text-destructive animate-pulse">
+      CONFIRMED EXPLOITABLE
+    </span>
+    {% endif %}
     {% set sev_class = 'bg-destructive/10 text-destructive' if vulnerability.severity == 'critical' or vulnerability.severity == 'high' else 'bg-secondary text-secondary-foreground' %}
     <span class="inline-flex items-center rounded-full border px-3 py-1 text-sm font-semibold {{ sev_class }}">
       {{ vulnerability.severity|upper }}
     </span>
+    <a href="{{ url_for('ai_chat.chat_page') }}?q={{ ('Explain ' ~ vulnerability.cve_id ~ ': ' ~ vulnerability.title ~ '. What is the risk and how do I remediate it?') | urlencode }}&ctx={{ ('CVE: ' ~ vulnerability.cve_id ~ ' | Title: ' ~ (vulnerability.title or '') ~ ' | Severity: ' ~ vulnerability.severity ~ ' | CVSS: ' ~ (vulnerability.cvss_base_score | string) ~ ' | Description: ' ~ (vulnerability.description or '')[:300]) | urlencode }}"
+       class="inline-flex items-center gap-1.5 rounded-md bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-300 hover:text-blue-200 px-3 py-1 text-sm font-medium transition-colors">
+      🤖 Ask AI
+    </a>
   </div>
 </div>
 
@@ -42,6 +51,54 @@
         <div class="col-span-2 space-y-1 pt-2 border-t mt-2">
           <p class="text-xs text-muted-foreground uppercase font-bold">Exploitability Outlook</p>
           <p class="text-sm italic text-foreground">{{ analysis.exploitability }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-xl border bg-card text-card-foreground shadow">
+      <div class="p-6 flex flex-col space-y-1.5 pb-2 border-b">
+        <h3 class="font-semibold leading-none tracking-tight text-lg">MITRE ATT&CK Mapping</h3>
+      </div>
+      <div class="p-6 space-y-6">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b">
+              <th class="text-left py-2 font-semibold">ID</th>
+              <th class="text-left py-2 font-semibold">Technique</th>
+              <th class="text-left py-2 font-semibold">Tactic</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tech in vulnerability.mitre_techniques %}
+            <tr class="border-b last:border-0">
+              <td class="py-2"><a href="{{ tech.url }}" target="_blank" class="text-accent hover:underline font-mono">{{ tech.technique_id }}</a></td>
+              <td class="py-2">{{ tech.technique_name }}</td>
+              <td class="py-2"><span class="inline-flex items-center rounded-md bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">{{ tech.tactic }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <div class="pt-4 border-t">
+            <p class="text-xs text-muted-foreground uppercase font-bold mb-3">Tactic Matrix Highlighting</p>
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse text-[10px] text-center table-fixed min-w-[600px]">
+                    <tr>
+                        {% set tactics = [
+                            "Reconnaissance", "Resource Development", "Initial Access", "Execution", 
+                            "Persistence", "Privilege Escalation", "Defense Evasion", "Credential Access",
+                            "Discovery", "Lateral Movement", "Collection", "Command and Control",
+                            "Exfiltration", "Impact"
+                        ] %}
+                        {% set active_tactics = vulnerability.mitre_techniques|map(attribute='tactic')|list %}
+                        {% for tactic in tactics %}
+                        <td class="border p-1 h-12 {{ 'bg-destructive/80 text-white font-bold' if tactic in active_tactics else 'bg-muted/30 text-muted-foreground' }}">
+                            {{ tactic }}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                </table>
+            </div>
         </div>
       </div>
     </div>

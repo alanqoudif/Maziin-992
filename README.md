@@ -67,6 +67,35 @@ Open [http://127.0.0.1:5000](http://127.0.0.1:5000)
 - `seed_data.py` full simulation data bootstrap
 
 ## Notes
-- All scanning and exploit data is simulated.
+- All scanning and exploit data is simulated by default, but REAL Nmap scanning is now supported.
 - Arabic strings are supported through UTF-8 content handling.
 - The app is intended for education and demonstration, not production security operations.
+
+### Installing Nmap for Real Scanning
+
+To use the real network scanning features, you must have Nmap installed on your system.
+
+**macOS:**
+```bash
+brew install nmap
+```
+
+**Ubuntu/Linux:**
+```bash
+sudo apt install nmap
+```
+
+**Note:** Some scan types (OS detection with `-O`) may require running with sudo:
+```bash
+sudo .venv/bin/python run.py
+```
+
+### Running a Real Scan
+
+1. Connect your machine to the network you want to scan.
+2. Open the dashboard (http://127.0.0.1:5000).
+3. The scanner will auto-detect your network.
+4. Select scan type and click "Start Scan".
+5. Wait for the scan to complete (2-5 minutes).
+6. View discovered devices in the **Devices** page.
+7. Check **Scan Results** (Security Tools > Scan Results) for detailed port/service information.

@@ -13,7 +13,7 @@ from app.models.device import Device
 from app.models.patch import Patch
 from app.models.vulnerability import Vulnerability
 from app.routes.rbac import roles_required
-from app.scanners.real_scanner import get_scan_state, parse_allowed_cidrs, start_scan_job, validate_targets
+from app.scanners.real_scanner import get_scan_state
 from app.scanners.simulator import generate_devices
 
 api_bp = Blueprint("api", __name__)
@@ -130,39 +130,74 @@ def alerts_api():
     )
 
 
-@api_bp.post("/scan/trigger")
+@api_bp.route("/scan/network-info", methods=["GET"])
+@login_required
+def get_network_info_api():
+    """Get current network information"""
+    from app.scanners.network_utils import get_network_info, check_nmap_installed
+    info = get_network_info()
+    nmap = check_nmap_installed()
+    return jsonify({
+        "network": info,
+        "nmap": nmap
+    })
+
+@api_bp.route("/scan/start", methods=["POST"])
 @login_required
 @roles_required("admin", "network_admin", "security_analyst")
-def trigger_scan():
-    payload = request.get_json(silent=True) or {}
-    use_real_scan = payload.get("real")
-    if use_real_scan is None:
-        use_real_scan = request.args.get("real", "1") in {"1", "true", "True"}
-    use_real_scan = bool(use_real_scan)
-    if not use_real_scan:
-        return jsonify({"status": "ok", "message": "Simulated scan triggered", "generated_devices": len(generate_devices())})
+def start_real_scan():
+    """Start a real Nmap scan on the connected network"""
+    from app.scanners.real_scanner import start_scan_async, get_scan_state
+    from app.scanners.network_utils import get_network_cidr, check_nmap_installed
+    
+    # Check nmap is installed
+    nmap_check = check_nmap_installed()
+    if not nmap_check["installed"]:
+        return jsonify({"error": "Nmap is not installed. Install it with: brew install nmap (macOS) or sudo apt install nmap (Linux)"}), 400
+    
+    # Check not already running
+    state = get_scan_state()
+    if state["status"] == "running":
+        return jsonify({"error": "A scan is already running", "state": state}), 409
+    
+    # Get target — from request body or auto-detect
+    data = request.get_json(silent=True) or {}
+    target = data.get("target") or get_network_cidr()
+    scan_type = data.get("scan_type", "normal")  # quick, normal, deep
+    
+    if not target:
+        return jsonify({"error": "Could not detect network. Please provide target CIDR."}), 400
+    
+    # Validate CIDR format
+    import re
+    if not re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$", target):
+        return jsonify({"error": "Invalid CIDR format. Use format: 192.168.1.0/24"}), 400
+    
+    # Start scan in background
+    start_scan_async(current_app._get_current_object(), target, scan_type)
+    
+    return jsonify({
+        "message": f"Scan started on {target} ({scan_type} mode)",
+        "target": target,
+        "scan_type": scan_type
+    })
 
-    if not current_app.config.get("REAL_SCAN_ENABLED"):
-        return jsonify({"status": "ok", "message": "Real scan disabled. Simulated scan triggered.", "generated_devices": len(generate_devices())})
-
-    requested_targets = payload.get("targets")
-    if not requested_targets:
-        requested_targets = [current_app.config.get("SCAN_ALLOWED_CIDRS", "192.168.0.0/16").split(",")[0].strip()]
-    profile = payload.get("profile") or current_app.config.get("SCAN_DEFAULT_PROFILE")
-
-    try:
-        allowed = parse_allowed_cidrs(current_app.config["SCAN_ALLOWED_CIDRS"])
-        targets = validate_targets(requested_targets, allowed, current_app.config["SCAN_MAX_TARGETS"])
-        start_scan_job(targets=targets, profile=profile)
-    except (ValueError, RuntimeError) as exc:
-        return jsonify({"status": "error", "message": str(exc)}), 400
-    return jsonify({"status": "accepted", "message": "Real scan started", "targets": targets, "profile": profile})
-
-
-@api_bp.get("/scan/status")
+@api_bp.route("/scan/status", methods=["GET"])
 @login_required
-def scan_status():
+def scan_status_api():
+    """Get current scan status and progress"""
+    from app.scanners.real_scanner import get_scan_state
     return jsonify(get_scan_state())
+
+@api_bp.route("/scan/results", methods=["GET"])
+@login_required
+def scan_results_api():
+    """Get the latest scan results"""
+    from app.scanners.real_scanner import get_scan_state
+    state = get_scan_state()
+    if state["results"]:
+        return jsonify(state["results"])
+    return jsonify({"hosts": [], "message": "No scan results available. Run a scan first."})
 
 
 @api_bp.get("/compliance/score")

@@ -80,6 +80,27 @@
               {{ label }}
             </a>
           {% endfor %}
+          <div class="relative group">
+            <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 text-muted-foreground hover:text-foreground">
+              Security Tools ▼
+            </button>
+            <div class="absolute left-0 mt-1 w-52 rounded-md shadow-lg bg-background border border-border hidden group-hover:block z-50">
+              <a href="{{ url_for('security_tools.network_topology') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Network Topology</a>
+              <a href="{{ url_for('security_tools.traffic_analysis') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Traffic Analysis</a>
+              <a href="{{ url_for('security_tools.exploit_verification') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Exploit Verification</a>
+              <a href="{{ url_for('security_tools.siem_logs') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">SIEM Logs</a>
+              <a href="{{ url_for('security_tools.security_config') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Security Config</a>
+              <a href="{{ url_for('security_tools.nmap_results') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Scan Results</a>
+              <div class="border-t border-border my-1"></div>
+              <a href="{{ url_for('security_tools.attack_scenarios') }}" class="block px-4 py-2 text-sm text-orange-400 hover:bg-accent hover:text-foreground font-medium">⚔ Attack Scenarios</a>
+            </div>
+          </div>
+          <a
+            href="{{ url_for('ai_chat.chat_page') }}"
+            class="inline-flex items-center gap-1.5 justify-center rounded-md text-sm font-medium transition-colors hover:bg-blue-600/20 h-9 px-4 py-2 {{ 'bg-blue-600/20 text-blue-300' if request.endpoint and request.endpoint.startswith('ai_chat') else 'text-blue-400 hover:text-blue-300' }}"
+          >
+            🤖 AI Assistant
+          </a>
         </nav>
       </div>
       <div class="flex items-center gap-2">

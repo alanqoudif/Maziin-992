@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h2 class="text-3xl font-bold tracking-tight">Wireshark Traffic Analysis</h2>
+</div>
+
+<div class="grid gap-6 md:grid-cols-4 mb-8">
+  <div class="rounded-xl border bg-card text-card-foreground shadow p-6">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Total Packets</p>
+    <p class="text-3xl font-bold">{{ analysis.total_packets }}</p>
+  </div>
+  <div class="rounded-xl border bg-card text-card-foreground shadow p-6">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Normal Traffic %</p>
+    <p class="text-3xl font-bold text-green-500">{{ analysis.normal_traffic_pct }}%</p>
+  </div>
+  <div class="rounded-xl border bg-card text-card-foreground shadow p-6">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Anomalies Detected</p>
+    <p class="text-3xl font-bold text-destructive">{{ analysis.anomaly_count }}</p>
+  </div>
+  <div class="rounded-xl border bg-card text-card-foreground shadow p-6">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Risk Level</p>
+    <p class="text-3xl font-bold {{ 'text-destructive' if analysis.anomaly_count > 0 else 'text-green-500' }}">
+        {{ 'MODERATE' if analysis.anomaly_count > 0 else 'LOW' }}
+    </p>
+  </div>
+</div>
+
+<div class="rounded-xl border bg-card text-card-foreground shadow overflow-hidden">
+  <div class="p-6 border-b">
+    <h3 class="font-semibold text-lg">Anomaly Feed</h3>
+  </div>
+  <div class="p-6">
+    <table id="anomalyTable" class="w-full text-sm">
+      <thead>
+        <tr class="border-b">
+          <th class="text-left py-3 px-4 font-semibold">No</th>
+          <th class="text-left py-3 px-4 font-semibold">Time</th>
+          <th class="text-left py-3 px-4 font-semibold">Source</th>
+          <th class="text-left py-3 px-4 font-semibold">Destination</th>
+          <th class="text-left py-3 px-4 font-semibold">Protocol</th>
+          <th class="text-left py-3 px-4 font-semibold">Length</th>
+          <th class="text-left py-3 px-4 font-semibold">Reason</th>
+          <th class="text-left py-3 px-4 font-semibold">Info</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for anomaly in analysis.anomalies %}
+        <tr class="border-b hover:bg-destructive/10 transition-colors text-destructive">
+          <td class="py-3 px-4">{{ anomaly.no }}</td>
+          <td class="py-3 px-4 font-mono">{{ anomaly.time }}</td>
+          <td class="py-3 px-4 font-mono font-bold">{{ anomaly.source }}</td>
+          <td class="py-3 px-4 font-mono">{{ anomaly.destination }}</td>
+          <td class="py-3 px-4 font-bold">{{ anomaly.protocol }}</td>
+          <td class="py-3 px-4">{{ anomaly.length }}</td>
+          <td class="py-3 px-4"><span class="capitalize">{{ anomaly.reason.replace('_', ' ') }}</span></td>
+          <td class="py-3 px-4 italic">{{ anomaly.info }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function() {
+    $('#anomalyTable').DataTable({
+        "order": [[0, "asc"]]
+    });
+  });
+</script>
+{% endblock %}

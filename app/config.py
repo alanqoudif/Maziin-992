@@ -12,7 +12,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///tadamun.db")
     SESSION_TIMEOUT_MINUTES = int(os.getenv("SESSION_TIMEOUT_MINUTES", "30"))
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=SESSION_TIMEOUT_MINUTES)
-    REAL_SCAN_ENABLED = os.getenv("REAL_SCAN_ENABLED", "false").lower() in {"1", "true", "yes"}
+    REAL_SCAN_ENABLED = os.getenv("REAL_SCAN_ENABLED", "true").lower() in {"1", "true", "yes"}
     SCAN_ALLOWED_CIDRS = os.getenv("SCAN_ALLOWED_CIDRS", "192.168.0.0/16")
     SCAN_DEFAULT_PROFILE = os.getenv("SCAN_DEFAULT_PROFILE", "-sV -Pn --open")
     NMAP_BINARY_PATH = os.getenv("NMAP_BINARY_PATH", "nmap")
@@ -21,3 +21,6 @@ class Config:
     SCAN_FALLBACK_PROFILE = os.getenv("SCAN_FALLBACK_PROFILE", "-sn")
     AUTO_SCAN_ON_START = os.getenv("AUTO_SCAN_ON_START", "true").lower() in {"1", "true", "yes"}
     AUTO_SCAN_INTERVAL_SEC = int(os.getenv("AUTO_SCAN_INTERVAL_SEC", "300"))
+    # Gemini AI Assistant
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyD9kPcYLGADLVRkVuUPrhWH-OCm3r9A9wk")
+    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite")

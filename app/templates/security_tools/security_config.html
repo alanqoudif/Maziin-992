@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h2 class="text-3xl font-bold tracking-tight">Security Configuration Baseline</h2>
+</div>
+
+<div class="grid gap-6 md:grid-cols-2">
+  <div class="rounded-xl border bg-card shadow overflow-hidden">
+    <div class="p-6 border-b">
+        <h3 class="font-semibold text-lg">Encryption & Communication</h3>
+    </div>
+    <div class="p-0">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-muted/50 border-b">
+                    <th class="text-left p-4">Setting</th>
+                    <th class="text-left p-4">Value</th>
+                    <th class="text-left p-4">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="border-b"><td class="p-4">Data at Rest Encryption</td><td class="p-4 font-mono">AES-256</td><td class="p-4 text-green-500 font-bold">✅ Active</td></tr>
+                <tr class="border-b"><td class="p-4">Data in Transit</td><td class="p-4 font-mono">TLS 1.3</td><td class="p-4 text-green-500 font-bold">✅ Active</td></tr>
+                <tr class="border-b"><td class="p-4">VPN Protocol</td><td class="p-4 font-mono">IPsec / IKEv2</td><td class="p-4 text-green-500 font-bold">✅ Active</td></tr>
+                <tr class="border-b"><td class="p-4">SSH Version</td><td class="p-4 font-mono">OpenSSH 8.9</td><td class="p-4 text-green-500 font-bold">✅ Active</td></tr>
+                <tr class="border-b"><td class="p-4">Certificate Authority</td><td class="p-4 font-mono">Internal CA</td><td class="p-4 text-green-500 font-bold">✅ Valid</td></tr>
+                <tr><td class="p-4">Deprecated Protocols</td><td class="p-4 text-xs">SSLv3, TLS 1.0, 1.1</td><td class="p-4 text-green-500 font-bold">✅ Disabled</td></tr>
+            </tbody>
+        </table>
+    </div>
+  </div>
+
+  <div class="rounded-xl border bg-card shadow overflow-hidden">
+    <div class="p-6 border-b">
+        <h3 class="font-semibold text-lg">Access Control (RBAC) Matrix</h3>
+    </div>
+    <div class="p-0">
+        <table class="w-full text-xs">
+            <thead>
+                <tr class="bg-muted/50 border-b">
+                    <th class="text-left p-3">Role</th>
+                    <th class="text-center p-3">Dash</th>
+                    <th class="text-center p-3">Vulns</th>
+                    <th class="text-center p-3">Patch</th>
+                    <th class="text-center p-3">Admin</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="border-b"><td class="p-3 font-bold">Admin</td><td class="p-3 text-center">✅</td><td class="p-3 text-center">✅</td><td class="p-3 text-center">✅</td><td class="p-3 text-center">✅</td></tr>
+                <tr class="border-b"><td class="p-3 font-bold">Analyst</td><td class="p-3 text-center">✅</td><td class="p-3 text-center">✅</td><td class="p-3 text-center">👁️</td><td class="p-3 text-center">❌</td></tr>
+                <tr class="border-b"><td class="p-3 font-bold">NetAdmin</td><td class="p-3 text-center">✅</td><td class="p-3 text-center">👁️</td><td class="p-3 text-center">✅</td><td class="p-3 text-center">❌</td></tr>
+                <tr><td class="p-3 font-bold">Viewer</td><td class="p-3 text-center">✅</td><td class="p-3 text-center">👁️</td><td class="p-3 text-center">👁️</td><td class="p-3 text-center">❌</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="p-6 bg-muted/20 border-t">
+        <p class="text-xs text-muted-foreground italic">Note: 👁️ = Read-only access, ✅ = Full access, ❌ = No access</p>
+    </div>
+  </div>
+</div>
+
+<div class="mt-8 rounded-xl border bg-card shadow overflow-hidden">
+    <div class="p-6 border-b">
+        <h3 class="font-semibold text-lg">Firewall Ruleset Baseline (TDM-FW-CORE)</h3>
+    </div>
+    <div class="p-0">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-muted/50 border-b">
+                    <th class="text-left p-4">#</th>
+                    <th class="text-left p-4">Action</th>
+                    <th class="text-left p-4">Source</th>
+                    <th class="text-left p-4">Destination</th>
+                    <th class="text-left p-4">Port</th>
+                    <th class="text-left p-4">Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="border-b"><td class="p-4">1</td><td class="p-4 text-green-500 font-bold">ALLOW</td><td class="p-4">192.168.10.0/24</td><td class="p-4">ANY</td><td class="p-4">443</td><td class="p-4">IT Dept HTTPS outbound</td></tr>
+                <tr class="border-b"><td class="p-4">2</td><td class="p-4 text-green-500 font-bold">ALLOW</td><td class="p-4">192.168.10.0/24</td><td class="p-4">192.168.10.5</td><td class="p-4">22</td><td class="p-4">SSH to servers (IT only)</td></tr>
+                <tr class="border-b"><td class="p-4">3</td><td class="p-4 text-destructive font-bold">DENY</td><td class="p-4">192.168.30.0/24</td><td class="p-4">ANY</td><td class="p-4">22</td><td class="p-4">Block SSH from HR</td></tr>
+                <tr class="border-b"><td class="p-4">4</td><td class="p-4 text-green-500 font-bold">ALLOW</td><td class="p-4">ANY</td><td class="p-4">192.168.10.20</td><td class="p-4">80,443</td><td class="p-4">Web server inbound</td></tr>
+                <tr class="border-b"><td class="p-4">5</td><td class="p-4 text-destructive font-bold">DENY</td><td class="p-4">ANY</td><td class="p-4">ANY</td><td class="p-4">23</td><td class="p-4">Block Telnet globally</td></tr>
+                <tr class="border-b"><td class="p-4">6</td><td class="p-4 text-green-500 font-bold">ALLOW</td><td class="p-4">192.168.50.0/24</td><td class="p-4">192.168.10.100</td><td class="p-4">1883</td><td class="p-4">IoT MQTT to broker</td></tr>
+                <tr><td class="p-4">15</td><td class="p-4 text-destructive font-bold">DENY</td><td class="p-4">ANY</td><td class="p-4">ANY</td><td class="p-4">ANY</td><td class="p-4">Default deny all</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

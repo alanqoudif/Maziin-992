@@ -1,5 +1,6 @@
 import csv
 import random
+import json
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -13,7 +14,12 @@ from app.models.patch import Patch
 from app.models.scan_result import ScanResult
 from app.models.user import User
 from app.models.vulnerability import Vulnerability
+from app.models.mitre import MitreAttack
+from app.models.security_event import SecurityEvent
 from app.scanners.simulator import generate_devices, save_topology
+from app.scanners.nmap_parser import parse_nmap_xml
+from app.scanners.wireshark_parser import parse_wireshark_csv
+from app.scanners.metasploit_parser import parse_metasploit_json
 
 REALISTIC_VULN_TEMPLATES = [
     ("Apache Log4j Remote Code Execution", "A vulnerable Log4j dependency allows unauthenticated remote code execution via crafted JNDI payloads."),
@@ -28,6 +34,29 @@ REALISTIC_VULN_TEMPLATES = [
     ("Windows SMB Remote Code Execution", "Crafted SMB packets can trigger memory corruption and remote code execution on unpatched hosts."),
     ("Apache Tomcat Session Fixation", "Session token handling allows attackers to force known session identifiers and hijack authenticated sessions."),
     ("Oracle WebLogic Deserialization RCE", "Unsafe deserialization in admin services enables unauthenticated remote code execution."),
+]
+
+MITRE_TECHNIQUES = [
+    {"technique_id": "T1190", "technique_name": "Exploit Public-Facing Application", "tactic": "Initial Access"},
+    {"technique_id": "T1133", "technique_name": "External Remote Services", "tactic": "Initial Access"},
+    {"technique_id": "T1078", "technique_name": "Valid Accounts", "tactic": "Persistence"},
+    {"technique_id": "T1059", "technique_name": "Command and Scripting Interpreter", "tactic": "Execution"},
+    {"technique_id": "T1053", "technique_name": "Scheduled Task/Job", "tactic": "Execution"},
+    {"technique_id": "T1021", "technique_name": "Remote Services", "tactic": "Lateral Movement"},
+    {"technique_id": "T1048", "technique_name": "Exfiltration Over Alternative Protocol", "tactic": "Exfiltration"},
+    {"technique_id": "T1071", "technique_name": "Application Layer Protocol", "tactic": "Command and Control"},
+    {"technique_id": "T1105", "technique_name": "Ingress Tool Transfer", "tactic": "Command and Control"},
+    {"technique_id": "T1110", "technique_name": "Brute Force", "tactic": "Credential Access"},
+    {"technique_id": "T1003", "technique_name": "OS Credential Dumping", "tactic": "Credential Access"},
+    {"technique_id": "T1562", "technique_name": "Impair Defenses", "tactic": "Defense Evasion"},
+    {"technique_id": "T1070", "technique_name": "Indicator Removal", "tactic": "Defense Evasion"},
+    {"technique_id": "T1046", "technique_name": "Network Service Discovery", "tactic": "Discovery"},
+    {"technique_id": "T1082", "technique_name": "System Information Discovery", "tactic": "Discovery"},
+    {"technique_id": "T1486", "technique_name": "Data Encrypted for Impact", "tactic": "Impact"},
+    {"technique_id": "T1499", "technique_name": "Endpoint Denial of Service", "tactic": "Impact"},
+    {"technique_id": "T1557", "technique_name": "Adversary-in-the-Middle", "tactic": "Collection"},
+    {"technique_id": "T1595", "technique_name": "Active Scanning", "tactic": "Reconnaissance"},
+    {"technique_id": "T1592", "technique_name": "Gather Victim Host Information", "tactic": "Reconnaissance"},
 ]
 
 ALERT_MESSAGE_TEMPLATES = {
@@ -55,7 +84,6 @@ PATCH_RECOMMENDATIONS = {
     "medium": "Schedule patch in the next maintenance window and monitor exploit telemetry daily.",
     "low": "Apply patch in the standard monthly cycle and track remediation in backlog governance.",
 }
-
 
 def synthetic_dataset(path="data/cve_dataset.csv", rows=2000):
     Path("data").mkdir(exist_ok=True)
@@ -101,7 +129,6 @@ def synthetic_dataset(path="data/cve_dataset.csv", rows=2000):
                 }
             )
 
-
 def seed():
     app = create_app()
     with app.app_context():
@@ -112,6 +139,7 @@ def seed():
         train_and_compare("data/cve_dataset.csv", "ml_models/vulnerability_model.pkl")
         save_topology("data/tadamun_network.json")
 
+        # Seed Users
         users = [
             ("admin", "admin@tadamun.om", "admin", "admin"),
             ("analyst", "analyst@tadamun.om", "analyst123", "security_analyst"),
@@ -123,6 +151,21 @@ def seed():
             u.set_password(password)
             db.session.add(u)
 
+        # Seed MITRE Techniques
+        mitre_objs = []
+        for t in MITRE_TECHNIQUES:
+            obj = MitreAttack(
+                technique_id=t["technique_id"],
+                technique_name=t["technique_name"],
+                tactic=t["tactic"],
+                description=f"Description for {t['technique_name']}",
+                url=f"https://attack.mitre.org/techniques/{t['technique_id']}/"
+            )
+            db.session.add(obj)
+            mitre_objs.append(obj)
+        db.session.flush()
+
+        # Seed Devices
         devices = []
         for d in generate_devices(200):
             device = Device(**d)
@@ -130,6 +173,7 @@ def seed():
             devices.append(device)
         db.session.flush()
 
+        # Seed Vulnerabilities
         severities = ["critical", "high", "medium", "low"]
         vuln_list = []
         for i in range(500):
@@ -151,6 +195,15 @@ def seed():
                 network_exposure_factor=round(random.uniform(0.1, 1), 2),
             )
             vuln.affected_devices = random.sample(devices, k=random.randint(1, 6))
+            
+            # Logical MITRE Mapping
+            if "RCE" in title or "Code Execution" in title:
+                vuln.mitre_techniques.append(next(t for t in mitre_objs if t.technique_id == "T1190"))
+            if "SSH" in title:
+                vuln.mitre_techniques.extend([t for t in mitre_objs if t.technique_id in ["T1021", "T1110"]])
+            if not vuln.mitre_techniques:
+                vuln.mitre_techniques = random.sample(mitre_objs, k=random.randint(1, 3))
+
             row = {
                 "cvss_base_score": vuln.cvss_base_score,
                 "exploitability_score": vuln.exploitability_score,
@@ -164,10 +217,12 @@ def seed():
             vuln_list.append(vuln)
             db.session.add(vuln)
         db.session.flush()
+
         sorted_v = sorted(vuln_list, key=lambda v: v.ai_risk_score, reverse=True)
         for idx, v in enumerate(sorted_v, 1):
             v.ai_priority_rank = idx
 
+        # Seed Patches
         for v in vuln_list[:350]:
             urgency = random.choice(["critical", "high", "medium", "low"])
             db.session.add(
@@ -182,19 +237,74 @@ def seed():
                 )
             )
 
-        for d in devices:
-            for scan_type in ["nmap", "wireshark", "metasploit"]:
-                db.session.add(
-                    ScanResult(
-                        scan_type=scan_type,
-                        scan_date=datetime.utcnow() - timedelta(days=random.randint(0, 30)),
-                        device=d,
-                        raw_output=f"{scan_type} simulated output for {d.hostname}",
-                        parsed_results={"hostname": d.hostname, "status": "ok"},
-                        findings_count=random.randint(0, 8),
-                    )
-                )
+        # Seed Scan Results using generated sample data
+        nmap_xml_path = Path("data/sample_nmap_scan.xml")
+        if nmap_xml_path.exists():
+             with open(nmap_xml_path, "r") as f:
+                 nmap_hosts = parse_nmap_xml(f.read())
+                 for h in nmap_hosts[:20]: # Only a few scan results in DB for demo
+                     dev = next((d for d in devices if d.ip_address == h["ip"]), random.choice(devices))
+                     db.session.add(ScanResult(
+                         scan_type="nmap",
+                         device=dev,
+                         raw_output="SIMULATED NMAP XML DATA",
+                         parsed_results=h,
+                         findings_count=h["findings_count"]
+                     ))
 
+        wireshark_csv_path = Path("data/sample_pcap_analysis.csv")
+        if wireshark_csv_path.exists():
+             with open(wireshark_csv_path, "r") as f:
+                 traffic_data = parse_wireshark_csv(f.read())
+                 for i in range(5):
+                      db.session.add(ScanResult(
+                          scan_type="wireshark",
+                          device=random.choice(devices),
+                          parsed_results=traffic_data,
+                          findings_count=traffic_data["anomaly_count"]
+                      ))
+
+        msf_json_path = Path("data/sample_metasploit.json")
+        if msf_json_path.exists():
+             with open(msf_json_path, "r") as f:
+                 msf_data = parse_metasploit_json(f.read())
+                 for r in msf_data["vulnerable"]:
+                      dev = next((d for d in devices if d.ip_address == r["target_host"]), random.choice(devices))
+                      db.session.add(ScanResult(
+                          scan_type="metasploit",
+                          device=dev,
+                          parsed_results=r,
+                          findings_count=1
+                      ))
+
+        # Seed Security Events (SIEM Logs)
+        sources = ["Firewall", "IDS/IPS", "SIEM", "Endpoint"]
+        event_types = ["Intrusion Attempt", "Login Failure", "Policy Violation", "Unauthorized Process"]
+        severities = ["critical", "high", "medium", "low", "info"]
+        
+        for i in range(500):
+            source = random.choice(sources)
+            severity = random.choice(severities)
+            event_type = random.choice(event_types)
+            device = random.choice(devices)
+            
+            message = f"[{source}] {event_type} detected on {device.hostname}"
+            if "Log4j" in message:
+                 severity = "critical"
+            
+            db.session.add(SecurityEvent(
+                timestamp=datetime.utcnow() - timedelta(minutes=random.randint(1, 10000)),
+                source=source,
+                event_type=event_type,
+                severity=severity,
+                source_ip=f"203.0.{random.randint(100, 200)}.{random.randint(1, 254)}",
+                dest_ip=device.ip_address,
+                message=message,
+                raw_log=f"CEF:0|Tadamun|SOC|1.0|{i}|{event_type}|{severity.upper()}|src={device.ip_address}",
+                device=device
+            ))
+
+        # Seed Alerts (using original templates but updated with more context)
         for _ in range(120):
             alert_type = random.choice(["critical_vuln", "exploit_detected", "compliance_violation", "anomaly"])
             device = random.choice(devices)
@@ -211,9 +321,9 @@ def seed():
                     is_read=random.choice([True, False]),
                 )
             )
+            
         db.session.commit()
         print("Seed completed.")
-
 
 if __name__ == "__main__":
     seed()

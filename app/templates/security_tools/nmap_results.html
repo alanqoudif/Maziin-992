@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h2 class="text-3xl font-bold tracking-tight">Nmap Scan Results</h2>
+</div>
+
+<div class="rounded-xl border bg-card text-card-foreground shadow overflow-hidden">
+  <div class="p-6">
+    <table id="nmapResultsTable" class="w-full text-sm">
+      <thead>
+        <tr class="border-b">
+          <th class="text-left py-3 px-4 font-semibold">Device</th>
+          <th class="text-left py-3 px-4 font-semibold">IP Address</th>
+          <th class="text-left py-3 px-4 font-semibold">OS</th>
+          <th class="text-left py-3 px-4 font-semibold">Open Ports</th>
+          <th class="text-left py-3 px-4 font-semibold">Findings</th>
+          <th class="text-left py-3 px-4 font-semibold">Scan Date</th>
+          <th class="text-left py-3 px-4 font-semibold">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for scan in results %}
+          {% if scan.scan_type == 'nmap_real' %}
+            {% for host in scan.data %}
+            <tr class="border-b hover:bg-muted/50 transition-colors">
+              <td class="py-3 px-4 font-medium">
+                {{ host.get('hostname') or 'Unknown' }}
+                <span class="ml-2 inline-flex items-center rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-500 border border-green-500/20">Real</span>
+              </td>
+              <td class="py-3 px-4 font-mono">{{ host.get('ip', 'N/A') }}</td>
+              <td class="py-3 px-4 text-xs">{{ host.get('os', 'Unknown') }}</td>
+              <td class="py-3 px-4">
+                 <div class="flex flex-wrap gap-1">
+                     {% for port in host.get('ports', []) %}
+                        <span class="inline-flex items-center rounded-md bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-400 border border-blue-500/20" title="{{ port.product }} {{ port.version }}">
+                          {{ port.port }}/{{ port.service }}
+                        </span>
+                     {% endfor %}
+                 </div>
+              </td>
+              <td class="py-3 px-4">
+                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-blue-500/20 text-blue-400">
+                  {{ host.get('ports', [])|length }} ports
+                </span>
+              </td>
+              <td class="py-3 px-4 text-xs text-muted-foreground">{{ scan.date.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td class="py-3 px-4">
+                  <button onclick='alert(`Host Details: ${JSON.stringify({{ host|tojson }})}`)' class="text-xs text-accent hover:underline">Details</button>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr class="border-b hover:bg-muted/50 transition-colors">
+              <td class="py-3 px-4 font-medium">{{ scan.device }}</td>
+              <td class="py-3 px-4 font-mono">{{ scan.ip }}</td>
+              <td class="py-3 px-4 text-xs">{{ scan.data.get('os', 'Unknown') }}</td>
+              <td class="py-3 px-4">
+                 <div class="flex flex-wrap gap-1">
+                     {% for port in scan.data.get('ports', []) %}
+                        {% if port.state == 'open' %}
+                        <span class="inline-flex items-center rounded-md bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-500 border border-green-500/20">{{ port.port }}/{{ port.service }}</span>
+                        {% endif %}
+                     {% endfor %}
+                 </div>
+              </td>
+              <td class="py-3 px-4">
+                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-accent text-accent-foreground">
+                  {{ scan.findings }}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-xs text-muted-foreground">{{ scan.date.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td class="py-3 px-4">
+                  <button onclick='alert(`Raw Data: ${JSON.stringify({{ scan.data|tojson }})}`)' class="text-xs text-accent hover:underline">View Raw</button>
+              </td>
+            </tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function() {
+    $('#nmapResultsTable').DataTable({
+      "order": [[5, "desc"]]
+    });
+  });
+</script>
+{% endblock %}

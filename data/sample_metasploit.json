@@ -1,7 +1,212 @@
 {
-  "results": [
-    {"cve_id": "CVE-2023-23397", "host": "192.168.10.11", "exploitable": true},
-    {"cve_id": "CVE-2021-44228", "host": "192.168.10.14", "exploitable": true},
-    {"cve_id": "CVE-2022-30190", "host": "192.168.20.22", "exploitable": false}
+  "scan_info": {
+    "scanner": "Metasploit Framework 6.3",
+    "date": "2026-04-05T22:14:59Z",
+    "target_network": "Tadamun Smart City LAN"
+  },
+  "exploit_results": [
+    {
+      "module": "exploit/windows/smb/ms17_010_eternalblue",
+      "target_host": "192.168.20.10",
+      "target_port": 445,
+      "cve": "CVE-2017-0144",
+      "result": "vulnerable",
+      "confidence": "high",
+      "session_obtained": true,
+      "payload": "windows/x64/meterpreter/reverse_tcp",
+      "details": "Successfully exploited SMB vulnerability on Finance file server"
+    },
+    {
+      "module": "exploit/linux/http/apache_log4j_rce",
+      "target_host": "192.168.10.20",
+      "target_port": 8080,
+      "cve": "CVE-2021-44228",
+      "result": "vulnerable",
+      "confidence": "high",
+      "session_obtained": true,
+      "payload": "java/meterpreter/reverse_tcp",
+      "details": "Log4Shell RCE confirmed on IT web application server"
+    },
+    {
+      "module": "exploit/multi/http/tomcat_mgr_deploy",
+      "target_host": "192.168.10.5",
+      "target_port": 8080,
+      "cve": "CVE-2010-2705",
+      "result": "vulnerable",
+      "confidence": "high",
+      "session_obtained": true,
+      "payload": "java/jsp_shell_reverse_tcp",
+      "details": "Manager credentials brute-forced"
+    },
+    {
+      "module": "exploit/windows/rdp/cve_2019_0708_bluekeep",
+      "target_host": "192.168.30.15",
+      "target_port": 3389,
+      "cve": "CVE-2019-0708",
+      "result": "not_vulnerable",
+      "confidence": "high",
+      "session_obtained": false,
+      "details": "Target system is patched against BlueKeep"
+    },
+    {
+      "module": "exploit/linux/ssh/mercurial_ssh_exec",
+      "target_host": "192.168.10.30",
+      "target_port": 22,
+      "cve": "CVE-2017-1000364",
+      "result": "error",
+      "confidence": "low",
+      "session_obtained": false,
+      "details": "Connection timed out"
+    },
+    {
+      "module": "exploit/generic/module_5",
+      "target_host": "192.168.10.15",
+      "target_port": 22,
+      "cve": "CVE-2020-1005",
+      "result": "not_vulnerable",
+      "confidence": "medium",
+      "session_obtained": false,
+      "details": "Exploit failed"
+    },
+    {
+      "module": "exploit/generic/module_6",
+      "target_host": "192.168.11.224",
+      "target_port": 80,
+      "cve": "CVE-2021-1006",
+      "result": "vulnerable",
+      "confidence": "medium",
+      "session_obtained": true,
+      "details": "Exploit successful"
+    },
+    {
+      "module": "exploit/generic/module_7",
+      "target_host": "192.168.42.60",
+      "target_port": 445,
+      "cve": "CVE-2022-1007",
+      "result": "not_vulnerable",
+      "confidence": "medium",
+      "session_obtained": false,
+      "details": "Exploit failed"
+    },
+    {
+      "module": "exploit/generic/module_8",
+      "target_host": "192.168.31.178",
+      "target_port": 80,
+      "cve": "CVE-2023-1008",
+      "result": "vulnerable",
+      "confidence": "medium",
+      "session_obtained": true,
+      "details": "Exploit successful"
+    },
+    {
+      "module": "exploit/generic/module_9",
+      "target_host": "192.168.30.229",
+      "target_port": 80,
+      "cve": "CVE-2024-1009",
+      "result": "not_vulnerable",
+      "confidence": "medium",
+      "session_obtained": false,
+      "details": "Exploit failed"
+    },
+    {
+      "module": "exploit/generic/module_10",
+      "target_host": "192.168.17.81",
+      "target_port": 445,
+      "cve": "CVE-2020-1010",
+      "result": "vulnerable",
+      "confidence": "medium",
+      "session_obtained": true,
+      "details": "Exploit successful"
+    },
+    {
+      "module": "exploit/generic/module_11",
+      "target_host": "192.168.12.166",
+      "target_port": 445,
+      "cve": "CVE-2021-1011",
+      "result": "not_vulnerable",
+      "confidence": "medium",
+      "session_obtained": false,
+      "details": "Exploit failed"
+    },
+    {
+      "module": "exploit/generic/module_12",
+      "target_host": "192.168.35.2",
+      "target_port": 80,
+      "cve": "CVE-2022-1012",
+      "result": "vulnerable",
+      "confidence": "medium",
+      "session_obtained": true,
+      "details": "Exploit successful"
+    },
+    {
+      "module": "exploit/generic/module_13",
+      "target_host": "192.168.14.243",
+      "target_port": 22,
+      "cve": "CVE-2023-1013",
+      "result": "not_vulnerable",
+      "confidence": "medium",
+      "session_obtained": false,
+      "details": "Exploit failed"
+    },
+    {
+      "module": "exploit/generic/module_14",
+      "target_host": "192.168.18.103",
+      "target_port": 443,
+      "cve": "CVE-2024-1014",
+      "result": "vulnerable",
+      "confidence": "medium",
+      "session_obtained": true,
+      "details": "Exploit successful"
+    },
+    {
+      "module": "exploit/generic/module_15",
+      "target_host": "192.168.25.126",
+      "target_port": 443,
+      "cve": "CVE-2020-1015",
+      "result": "not_vulnerable",
+      "confidence": "medium",
+      "session_obtained": false,
+      "details": "Exploit failed"
+    },
+    {
+      "module": "exploit/generic/module_16",
+      "target_host": "192.168.21.69",
+      "target_port": 22,
+      "cve": "CVE-2021-1016",
+      "result": "vulnerable",
+      "confidence": "medium",
+      "session_obtained": true,
+      "details": "Exploit successful"
+    },
+    {
+      "module": "exploit/generic/module_17",
+      "target_host": "192.168.39.106",
+      "target_port": 80,
+      "cve": "CVE-2022-1017",
+      "result": "not_vulnerable",
+      "confidence": "medium",
+      "session_obtained": false,
+      "details": "Exploit failed"
+    },
+    {
+      "module": "exploit/generic/module_18",
+      "target_host": "192.168.30.211",
+      "target_port": 443,
+      "cve": "CVE-2023-1018",
+      "result": "vulnerable",
+      "confidence": "medium",
+      "session_obtained": true,
+      "details": "Exploit successful"
+    },
+    {
+      "module": "exploit/generic/module_19",
+      "target_host": "192.168.25.16",
+      "target_port": 445,
+      "cve": "CVE-2024-1019",
+      "result": "not_vulnerable",
+      "confidence": "medium",
+      "session_obtained": false,
+      "details": "Exploit failed"
+    }
   ]
 }

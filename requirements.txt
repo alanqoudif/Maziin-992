@@ -14,5 +14,8 @@ matplotlib
 seaborn
 plotly
 reportlab
+pyotp
+qrcode[pil]
 faker
+requests
 pytest

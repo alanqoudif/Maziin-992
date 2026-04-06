@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="flex flex-col h-[calc(100vh-10rem)] max-h-[800px]">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-4 flex-shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-xl">🤖</div>
+      <div>
+        <h2 class="text-2xl font-bold tracking-tight">AI Security Assistant</h2>
+        <p class="text-xs text-muted-foreground">Powered by Gemini · Ask about vulnerabilities, attacks, and remediations</p>
+      </div>
+    </div>
+    <button onclick="clearChat()"
+            class="text-xs text-muted-foreground hover:text-foreground border border-border rounded-lg px-3 py-1.5 transition-colors">
+      Clear chat
+    </button>
+  </div>
+
+  <!-- Chat window -->
+  <div id="chat-messages"
+       class="flex-1 overflow-y-auto rounded-xl border bg-card shadow-inner p-4 space-y-4 mb-4">
+
+    <!-- Welcome message -->
+    <div class="flex items-start gap-3" id="welcome-msg">
+      <div class="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-sm flex-shrink-0">🤖</div>
+      <div class="bg-muted/40 rounded-2xl rounded-tl-none px-4 py-3 max-w-[85%]">
+        <p class="text-sm leading-relaxed">
+          مرحباً! أنا مساعدك الأمني المدعوم بالذكاء الاصطناعي.<br><br>
+          يمكنني مساعدتك في:
+        </p>
+        <ul class="text-sm mt-2 space-y-1 list-none">
+          <li>🔍 شرح الثغرات الأمنية (CVEs) وكيفية استغلالها</li>
+          <li>🛡️ إجراءات الحماية والتخفيف لكل هجمة</li>
+          <li>📋 تقنيات MITRE ATT&CK</li>
+          <li>🔧 خطوات الاستجابة للحوادث</li>
+        </ul>
+        <p class="text-sm mt-2">How can I help you today?</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Input area -->
+  <div class="flex-shrink-0">
+    {% if context %}
+    <div id="context-banner"
+         class="mb-2 flex items-center justify-between gap-2 rounded-lg bg-blue-500/10 border border-blue-500/20 px-3 py-2 text-xs text-blue-300">
+      <span>📎 Context attached: <span class="font-mono">{{ context[:80] }}{% if context|length > 80 %}…{% endif %}</span></span>
+      <button onclick="document.getElementById('context-banner').remove(); window.chatContext='';"
+              class="text-blue-400 hover:text-white ml-2">✕</button>
+    </div>
+    {% endif %}
+
+    <div class="flex gap-2">
+      <div class="flex-1 relative">
+        <textarea id="user-input"
+                  rows="1"
+                  placeholder="Ask about a vulnerability, attack type, or security concept…"
+                  class="w-full bg-background border border-input rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 pr-12"
+                  style="min-height:48px; max-height:140px;"
+                  onkeydown="handleKeydown(event)"
+                  oninput="autoResize(this)"></textarea>
+        <button onclick="sendMessage()"
+                id="send-btn"
+                class="absolute right-2 bottom-2 w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors disabled:opacity-50">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick prompts -->
+    <div class="flex flex-wrap gap-1.5 mt-2">
+      <button onclick="setPrompt('ما هي أخطر الثغرات الأمنية لعام 2024 وكيف أحمي نفسي منها؟')"
+              class="text-xs bg-muted/40 hover:bg-muted/80 border border-border rounded-full px-3 py-1 transition-colors">
+        أخطر الثغرات 2024
+      </button>
+      <button onclick="setPrompt('Explain CVE-2017-0144 (EternalBlue) and how to patch it')"
+              class="text-xs bg-muted/40 hover:bg-muted/80 border border-border rounded-full px-3 py-1 transition-colors">
+        EternalBlue CVE
+      </button>
+      <button onclick="setPrompt('How do I detect an ARP poisoning attack on my network?')"
+              class="text-xs bg-muted/40 hover:bg-muted/80 border border-border rounded-full px-3 py-1 transition-colors">
+        Detect ARP Poisoning
+      </button>
+      <button onclick="setPrompt('What is CVSS scoring and how do I prioritize vulnerabilities?')"
+              class="text-xs bg-muted/40 hover:bg-muted/80 border border-border rounded-full px-3 py-1 transition-colors">
+        CVSS Scoring
+      </button>
+      <button onclick="setPrompt('ما هي خطوات الاستجابة للحوادث الأمنية؟')"
+              class="text-xs bg-muted/40 hover:bg-muted/80 border border-border rounded-full px-3 py-1 transition-colors">
+        الاستجابة للحوادث
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Conversation history for multi-turn context
+let history = [];
+let isLoading = false;
+window.chatContext = {{ context | tojson }};
+
+// Auto-fill initial question if provided
+document.addEventListener('DOMContentLoaded', () => {
+  const initialQ = {{ initial_question | tojson }};
+  if (initialQ) {
+    document.getElementById('user-input').value = initialQ;
+    autoResize(document.getElementById('user-input'));
+    sendMessage();
+  }
+});
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+
+function handleKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function setPrompt(text) {
+  const input = document.getElementById('user-input');
+  input.value = text;
+  autoResize(input);
+  input.focus();
+}
+
+function clearChat() {
+  history = [];
+  const container = document.getElementById('chat-messages');
+  // Keep only welcome message
+  const welcome = document.getElementById('welcome-msg');
+  container.innerHTML = '';
+  if (welcome) container.appendChild(welcome);
+}
+
+function appendMessage(role, text) {
+  const container = document.getElementById('chat-messages');
+  const isUser = role === 'user';
+
+  const wrapper = document.createElement('div');
+  wrapper.className = `flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}`;
+
+  const avatar = document.createElement('div');
+  avatar.className = `w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${
+    isUser
+      ? 'bg-blue-600/20 border border-blue-500/30'
+      : 'bg-muted/60 border border-border'
+  }`;
+  avatar.textContent = isUser ? '👤' : '🤖';
+
+  const bubble = document.createElement('div');
+  bubble.className = `max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+    isUser
+      ? 'bg-blue-600/20 border border-blue-500/20 rounded-tr-none text-right'
+      : 'bg-muted/40 rounded-tl-none'
+  }`;
+
+  if (role === 'model') {
+    bubble.innerHTML = renderMarkdown(text);
+  } else {
+    bubble.textContent = text;
+  }
+
+  wrapper.appendChild(avatar);
+  wrapper.appendChild(bubble);
+  container.appendChild(wrapper);
+  container.scrollTop = container.scrollHeight;
+  return bubble;
+}
+
+function appendLoading() {
+  const container = document.getElementById('chat-messages');
+  const wrapper = document.createElement('div');
+  wrapper.className = 'flex items-start gap-3';
+  wrapper.id = 'loading-indicator';
+
+  wrapper.innerHTML = `
+    <div class="w-8 h-8 rounded-full bg-muted/60 border border-border flex items-center justify-center text-sm flex-shrink-0">🤖</div>
+    <div class="bg-muted/40 rounded-2xl rounded-tl-none px-4 py-3 flex items-center gap-2">
+      <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay:0ms"></span>
+      <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay:150ms"></span>
+      <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay:300ms"></span>
+    </div>`;
+  container.appendChild(wrapper);
+  container.scrollTop = container.scrollHeight;
+}
+
+function removeLoading() {
+  const el = document.getElementById('loading-indicator');
+  if (el) el.remove();
+}
+
+function renderMarkdown(text) {
+  // Basic markdown rendering
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code class="bg-muted/60 rounded px-1 font-mono text-xs">$1</code>')
+    .replace(/^### (.+)$/gm, '<h3 class="font-bold text-base mt-3 mb-1">$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2 class="font-bold text-lg mt-3 mb-1">$2</h2>')
+    .replace(/^# (.+)$/gm, '<h1 class="font-bold text-xl mt-3 mb-1">$1</h1>')
+    .replace(/^\d+\. (.+)$/gm, '<li class="ml-4 list-decimal">$1</li>')
+    .replace(/^[-*] (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
+    .replace(/\n\n/g, '</p><p class="mt-2">')
+    .replace(/\n/g, '<br>');
+}
+
+async function sendMessage() {
+  if (isLoading) return;
+
+  const input = document.getElementById('user-input');
+  const message = input.value.trim();
+  if (!message) return;
+
+  input.value = '';
+  autoResize(input);
+  isLoading = true;
+  document.getElementById('send-btn').disabled = true;
+
+  appendMessage('user', message);
+  appendLoading();
+
+  try {
+    const resp = await fetch('/api/v1/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: message,
+        history: history,
+        context: window.chatContext || '',
+      }),
+    });
+
+    const data = await resp.json();
+    removeLoading();
+
+    if (!resp.ok || data.error) {
+      appendMessage('model', `⚠️ Error: ${data.error || 'Unknown error'}`);
+    } else {
+      appendMessage('model', data.reply);
+      // Update history for multi-turn
+      history.push({ role: 'user', text: message });
+      history.push({ role: 'model', text: data.reply });
+      // Keep last 10 turns to avoid token overflow
+      if (history.length > 20) history = history.slice(-20);
+    }
+  } catch (err) {
+    removeLoading();
+    appendMessage('model', `⚠️ Network error: ${err.message}`);
+  }
+
+  isLoading = false;
+  document.getElementById('send-btn').disabled = false;
+  input.focus();
+}
+</script>
+{% endblock %}

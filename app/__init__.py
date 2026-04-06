@@ -23,6 +23,8 @@ def create_app(config_class=Config):
     from app.routes.patches import patches_bp
     from app.routes.reports import reports_bp
     from app.routes.vulnerabilities import vulnerabilities_bp
+    from app.routes.security_tools import security_tools_bp
+    from app.routes.ai_chat import ai_chat_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -32,6 +34,8 @@ def create_app(config_class=Config):
     app.register_blueprint(alerts_bp)
     app.register_blueprint(compliance_bp)
     app.register_blueprint(reports_bp)
+    app.register_blueprint(security_tools_bp)
+    app.register_blueprint(ai_chat_bp)
     app.register_blueprint(api_bp, url_prefix="/api/v1")
 
     initialize_auto_scan(app)

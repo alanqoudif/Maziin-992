@@ -18,7 +18,20 @@ class Device(db.Model):
     criticality = db.Column(db.String(20), nullable=False)
     status = db.Column(db.String(20), nullable=False, default="active")
     last_scan = db.Column(db.DateTime, nullable=True)
+    open_ports_json = db.Column(db.Text, nullable=True)  # JSON string of open ports from real scan
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     scan_results = db.relationship("ScanResult", back_populates="device", lazy=True)
     alerts = db.relationship("Alert", back_populates="device", lazy=True)
+    security_events = db.relationship("SecurityEvent", back_populates="device", lazy=True)
+
+    @property
+    def open_ports(self):
+        """Parse open ports JSON"""
+        import json
+        if self.open_ports_json:
+            try:
+                return json.loads(self.open_ports_json)
+            except:
+                return []
+        return []

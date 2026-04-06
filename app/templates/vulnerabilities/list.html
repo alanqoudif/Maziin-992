@@ -30,6 +30,9 @@
               <a href="{{ url_for('vulnerabilities.vulnerability_detail', vuln_id=v.id) }}" class="font-medium hover:underline text-primary">
                 {{ v.cve_id }}
               </a>
+              {% if confirmed_cves and v.cve_id in confirmed_cves %}
+              <span class="ml-1 inline-flex items-center rounded-full bg-destructive/20 px-2 py-0.5 text-[10px] font-bold text-destructive border border-destructive/30">CONFIRMED</span>
+              {% endif %}
             </td>
             <td class="p-4 align-middle max-w-[200px] truncate">{{ v.title }}</td>
             <td class="p-4 align-middle font-mono text-xs">{{ v.cvss_base_score }}</td>
