@@ -1,0 +1,561 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<report id="ov-rpt-tadamun-2026" extension="xml" type="scan" content_type="text/xml">
+  <name>Tadamun Smart City — Full Network OpenVAS Scan 2026-04-10</name>
+  <results max="30" start="1">
+
+    <result id="r-001">
+      <name>Apache HTTP Server Multiple Vulnerabilities</name>
+      <host>192.168.10.20</host>
+      <port>443/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.108514">
+        <name>Apache HTTP Server Multiple Vulnerabilities (CVE-2021-41773, CVE-2021-42013)</name>
+        <family>Web Servers</family>
+        <cvss_base>9.8</cvss_base>
+        <tags>solution_type=VendorFix|summary=Apache HTTP Server 2.4.49 path traversal and RCE|solution=Update Apache HTTP Server to version 2.4.51 or later</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2021-41773"/>
+          <ref type="CVE" id="CVE-2021-42013"/>
+        </refs>
+      </nvt>
+      <threat>Critical</threat>
+      <severity>9.8</severity>
+      <description>Apache HTTP Server 2.4.49 was found vulnerable to a path traversal and remote code execution vulnerability. An attacker can map URLs to files outside the expected document root. If CGI scripts are enabled, remote code execution is possible.</description>
+      <solution>Update Apache HTTP Server to version 2.4.51 or later. Disable mod_cgi if not required.</solution>
+    </result>
+
+    <result id="r-002">
+      <name>OpenSSH &lt; 8.8 Multiple Vulnerabilities</name>
+      <host>192.168.10.15</host>
+      <port>22/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.117599">
+        <name>OpenSSH &lt; 8.8 Multiple Vulnerabilities</name>
+        <family>General</family>
+        <cvss_base>7.5</cvss_base>
+        <tags>solution_type=VendorFix|summary=Multiple vulnerabilities in OpenSSH before 8.8|solution=Update OpenSSH to version 8.8 or later</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2021-28041"/>
+          <ref type="CVE" id="CVE-2021-41617"/>
+        </refs>
+      </nvt>
+      <threat>High</threat>
+      <severity>7.5</severity>
+      <description>The remote SSH server is running a version of OpenSSH prior to 8.8. This version is affected by multiple vulnerabilities including privilege escalation via ssh-agent and insufficient privilege separation in sshd.</description>
+      <solution>Update OpenSSH to version 8.8 or later. Apply OS vendor patches as available.</solution>
+    </result>
+
+    <result id="r-003">
+      <name>SMB Remote Code Execution — MS17-010 (EternalBlue)</name>
+      <host>192.168.20.45</host>
+      <port>445/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.108065">
+        <name>MS17-010: Security Update for Windows SMB Server</name>
+        <family>Windows</family>
+        <cvss_base>9.8</cvss_base>
+        <tags>solution_type=VendorFix|summary=Windows SMBv1 remote code execution (EternalBlue)|solution=Apply Microsoft security update MS17-010 (KB4012212) and disable SMBv1</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2017-0144"/>
+          <ref type="CVE" id="CVE-2017-0145"/>
+        </refs>
+      </nvt>
+      <threat>Critical</threat>
+      <severity>9.8</severity>
+      <description>The remote Windows host is missing critical security update MS17-010. The SMBv1 implementation contains a buffer overflow that allows unauthenticated remote code execution. This vulnerability was exploited by the WannaCry ransomware campaign.</description>
+      <solution>Apply Microsoft security update MS17-010. Disable SMBv1 using PowerShell: Set-SmbServerConfiguration -EnableSMB1Protocol $false</solution>
+    </result>
+
+    <result id="r-004">
+      <name>Log4j Remote Code Execution (Log4Shell)</name>
+      <host>192.168.20.50</host>
+      <port>8080/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.117773">
+        <name>Apache Log4j RCE Vulnerability (Log4Shell) (CVE-2021-44228)</name>
+        <family>Web application abuses</family>
+        <cvss_base>10.0</cvss_base>
+        <tags>solution_type=VendorFix|summary=Apache Log4j 2.x JNDI injection RCE|solution=Update Log4j to version 2.17.1 or later. Set log4j2.formatMsgNoLookups=true as interim mitigation.</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2021-44228"/>
+          <ref type="CVE" id="CVE-2021-45046"/>
+        </refs>
+      </nvt>
+      <threat>Critical</threat>
+      <severity>10.0</severity>
+      <description>The remote application uses Apache Log4j 2.x which is vulnerable to remote code execution via crafted JNDI lookup payloads in log messages. An unauthenticated attacker can execute arbitrary code on the server. This is actively exploited in the wild (CISA KEV).</description>
+      <solution>Update Log4j to version 2.17.1 or later. Apply WAF rules to block JNDI lookup patterns in all user-supplied input.</solution>
+    </result>
+
+    <result id="r-005">
+      <name>SSL/TLS: Report Vulnerable Cipher Suites</name>
+      <host>192.168.10.20</host>
+      <port>443/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.103591">
+        <name>SSL/TLS: Report Vulnerable Cipher Suites for HTTPS</name>
+        <family>SSL and TLS</family>
+        <cvss_base>6.5</cvss_base>
+        <tags>solution_type=Mitigation|summary=Server supports weak SSL/TLS cipher suites|solution=Disable weak ciphers (RC4, DES, 3DES, EXPORT). Configure server to require TLS 1.2 or TLS 1.3 minimum.</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2016-2183"/>
+        </refs>
+      </nvt>
+      <threat>Medium</threat>
+      <severity>6.5</severity>
+      <description>The remote host supports weak SSL/TLS cipher suites including RC4, DES, 3DES, and EXPORT ciphers. These can be exploited in SWEET32, BEAST, and POODLE attacks to decrypt encrypted communications.</description>
+      <solution>Disable all weak ciphers. Configure TLS 1.2+ with AEAD cipher suites only (AES-GCM, ChaCha20-Poly1305).</solution>
+    </result>
+
+    <result id="r-006">
+      <name>Cisco IOS Privilege Escalation</name>
+      <host>192.168.30.1</host>
+      <port>443/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.112050">
+        <name>Cisco IOS XE Web UI Privilege Escalation (CVE-2023-20198)</name>
+        <family>CISCO</family>
+        <cvss_base>10.0</cvss_base>
+        <tags>solution_type=VendorFix|summary=Cisco IOS XE unauthenticated privilege escalation via web UI|solution=Apply Cisco security advisory cisco-sa-iosxe-webui-privesc-j22SaA4z. Disable HTTPS server if not needed.</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2023-20198"/>
+        </refs>
+      </nvt>
+      <threat>Critical</threat>
+      <severity>10.0</severity>
+      <description>The Cisco IOS XE web UI contains a critical privilege escalation vulnerability. An unauthenticated remote attacker can create a privileged account and use it to gain complete control of the device. This is in the CISA KEV catalog and actively exploited.</description>
+      <solution>Apply Cisco IOS XE patch immediately. Disable the HTTP/HTTPS server feature: no ip http server and no ip http secure-server</solution>
+    </result>
+
+    <result id="r-007">
+      <name>VMware vCenter Server Remote Code Execution</name>
+      <host>192.168.40.10</host>
+      <port>443/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.117398">
+        <name>VMware vCenter Server RCE (CVE-2021-22005)</name>
+        <family>Web application abuses</family>
+        <cvss_base>9.8</cvss_base>
+        <tags>solution_type=VendorFix|summary=VMware vCenter Server arbitrary file upload leading to RCE|solution=Apply VMware VMSA-2021-0020 patch. Update vCenter to patched version.</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2021-22005"/>
+        </refs>
+      </nvt>
+      <threat>Critical</threat>
+      <severity>9.8</severity>
+      <description>VMware vCenter Server is affected by an arbitrary file upload vulnerability in the Analytics service. An attacker with network access to port 443 can upload arbitrary files to the server and achieve remote code execution without authentication.</description>
+      <solution>Apply VMware security advisory VMSA-2021-0020. Update vCenter Server to a patched version immediately.</solution>
+    </result>
+
+    <result id="r-008">
+      <name>MySQL Server Unencrypted Connection</name>
+      <host>192.168.40.25</host>
+      <port>3306/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.100012">
+        <name>MySQL / MariaDB: Unencrypted Cleartext Login</name>
+        <family>Databases</family>
+        <cvss_base>5.9</cvss_base>
+        <tags>solution_type=Mitigation|summary=MySQL accepts connections without TLS encryption|solution=Enable require_secure_transport=ON in MySQL configuration. Force SSL for all connections.</tags>
+        <refs></refs>
+      </nvt>
+      <threat>Medium</threat>
+      <severity>5.9</severity>
+      <description>The remote MySQL server accepts unencrypted connections. Credentials and data transmitted over the network can be intercepted by a man-in-the-middle attacker on the same network segment.</description>
+      <solution>Enable TLS for MySQL connections. Set require_secure_transport=ON and configure ssl-cert, ssl-key, ssl-ca in my.cnf.</solution>
+    </result>
+
+    <result id="r-009">
+      <name>Fortinet FortiOS SSL VPN Heap Overflow</name>
+      <host>192.168.10.1</host>
+      <port>8443/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.118820">
+        <name>Fortinet FortiOS SSL-VPN RCE (CVE-2022-42475)</name>
+        <family>Firewalls</family>
+        <cvss_base>9.3</cvss_base>
+        <tags>solution_type=VendorFix|summary=Fortinet FortiOS heap-based buffer overflow in SSL-VPN|solution=Update FortiOS to 7.2.3 or later. Apply Fortinet PSIRT FG-IR-22-398.</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2022-42475"/>
+        </refs>
+      </nvt>
+      <threat>Critical</threat>
+      <severity>9.3</severity>
+      <description>A heap-based buffer overflow vulnerability in FortiOS SSL-VPN allows remote unauthenticated attackers to execute arbitrary code or commands. This vulnerability is actively exploited by threat actors including nation-state groups.</description>
+      <solution>Update FortiOS immediately to a patched version. Monitor for IOCs listed in Fortinet advisory FG-IR-22-398.</solution>
+    </result>
+
+    <result id="r-010">
+      <name>Windows Remote Desktop BlueKeep</name>
+      <host>192.168.20.30</host>
+      <port>3389/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.108706">
+        <name>MS19-0708 / BlueKeep: Remote Desktop Services RCE (CVE-2019-0708)</name>
+        <family>Windows</family>
+        <cvss_base>9.8</cvss_base>
+        <tags>solution_type=VendorFix|summary=Windows RDS pre-authentication RCE (BlueKeep)|solution=Apply KB4499175 (Windows 7) or KB4499149 (Server 2008 R2). Enable Network Level Authentication. Block RDP from internet.</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2019-0708"/>
+        </refs>
+      </nvt>
+      <threat>Critical</threat>
+      <severity>9.8</severity>
+      <description>The remote Windows host is vulnerable to BlueKeep. The vulnerability exists in Remote Desktop Services and allows an unauthenticated attacker to execute arbitrary code. This is wormable — no user interaction required.</description>
+      <solution>Apply Microsoft patch KB4499175. Enable Network Level Authentication (NLA). Disable RDP if not required. Block TCP 3389 at perimeter firewall.</solution>
+    </result>
+
+    <result id="r-011">
+      <name>PHP 7.x Multiple Vulnerabilities</name>
+      <host>192.168.20.50</host>
+      <port>80/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.116793">
+        <name>PHP &lt; 8.0.28 / 8.1.x &lt; 8.1.16 Multiple Vulnerabilities</name>
+        <family>Web Servers</family>
+        <cvss_base>7.5</cvss_base>
+        <tags>solution_type=VendorFix|summary=PHP affected by multiple security vulnerabilities|solution=Update PHP to version 8.0.28, 8.1.16, or 8.2.3 or later.</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2023-0568"/>
+          <ref type="CVE" id="CVE-2023-0662"/>
+        </refs>
+      </nvt>
+      <threat>High</threat>
+      <severity>7.5</severity>
+      <description>The remote host is running an outdated version of PHP that is affected by multiple vulnerabilities including heap buffer overflow in phar extension and DoS in HTTP multipart file upload handling.</description>
+      <solution>Update PHP to the latest stable version in the 8.1.x or 8.2.x branch.</solution>
+    </result>
+
+    <result id="r-012">
+      <name>Nginx HTTP Request Smuggling</name>
+      <host>192.168.10.20</host>
+      <port>80/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.112812">
+        <name>Nginx HTTP Request Smuggling (CVE-2019-20372)</name>
+        <family>Web Servers</family>
+        <cvss_base>5.3</cvss_base>
+        <tags>solution_type=VendorFix|summary=Nginx HTTP request smuggling due to error_page handling|solution=Update Nginx to 1.17.7 or later.</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2019-20372"/>
+        </refs>
+      </nvt>
+      <threat>Medium</threat>
+      <severity>5.3</severity>
+      <description>Nginx before 1.17.7 is affected by an HTTP request smuggling vulnerability. When error_page is used with HTTP/1.1 keep-alive, an attacker can smuggle requests to a backend server.</description>
+      <solution>Update Nginx to version 1.17.7 or later. Disable HTTP keep-alive if not needed.</solution>
+    </result>
+
+    <result id="r-013">
+      <name>Jenkins Unauthenticated RCE</name>
+      <host>192.168.40.30</host>
+      <port>8080/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.113370">
+        <name>Jenkins CLI Unauthenticated Remote Code Execution (CVE-2024-23897)</name>
+        <family>Web application abuses</family>
+        <cvss_base>9.8</cvss_base>
+        <tags>solution_type=VendorFix|summary=Jenkins arbitrary file read via CLI leading to RCE|solution=Update Jenkins to 2.442 or later (LTS: 2.426.3). Disable CLI access if not needed.</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2024-23897"/>
+        </refs>
+      </nvt>
+      <threat>Critical</threat>
+      <severity>9.8</severity>
+      <description>Jenkins is vulnerable to an arbitrary file read vulnerability via the CLI command parser. An unauthenticated attacker can read arbitrary files from the Jenkins controller file system, which in certain configurations leads to remote code execution.</description>
+      <solution>Update Jenkins to version 2.442 or 2.426.3 LTS. Disable Jenkins CLI if not required.</solution>
+    </result>
+
+    <result id="r-014">
+      <name>SNMP Default Community String</name>
+      <host>192.168.30.5</host>
+      <port>161/udp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.10264">
+        <name>SNMP Community String Disclosure</name>
+        <family>SNMP</family>
+        <cvss_base>7.5</cvss_base>
+        <tags>solution_type=Mitigation|summary=SNMP community string is set to default value 'public'|solution=Change SNMP community strings from default values. Use SNMPv3 with authentication and encryption.</tags>
+        <refs></refs>
+      </nvt>
+      <threat>High</threat>
+      <severity>7.5</severity>
+      <description>The remote SNMP agent is using the default community string 'public'. This allows any attacker to read the complete MIB of the device, including system information, routing tables, and potentially credentials.</description>
+      <solution>Change the SNMP community string to a complex non-default value. Migrate to SNMPv3 with SHA authentication and AES encryption. Restrict SNMP access by source IP.</solution>
+    </result>
+
+    <result id="r-015">
+      <name>Kubernetes API Server Exposure</name>
+      <host>192.168.40.5</host>
+      <port>6443/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.117850">
+        <name>Kubernetes API Server Accessible Without Authentication</name>
+        <family>Service detection</family>
+        <cvss_base>9.1</cvss_base>
+        <tags>solution_type=Mitigation|summary=Kubernetes API server accessible without authentication|solution=Enable RBAC. Disable anonymous-auth on kube-apiserver. Restrict access to API server by network policy.</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2022-3294"/>
+        </refs>
+      </nvt>
+      <threat>Critical</threat>
+      <severity>9.1</severity>
+      <description>The Kubernetes API server is accessible without authentication. An attacker with network access can enumerate cluster resources, create privileged pods, and gain full cluster control. Anonymous authentication appears to be enabled.</description>
+      <solution>Disable anonymous-auth flag. Enable RBAC. Implement network policies. Restrict API server access to management networks only.</solution>
+    </result>
+
+    <result id="r-016">
+      <name>Redis Server No Authentication Required</name>
+      <host>192.168.40.25</host>
+      <port>6379/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.105873">
+        <name>Redis Server No Authentication Required</name>
+        <family>Databases</family>
+        <cvss_base>9.8</cvss_base>
+        <tags>solution_type=Mitigation|summary=Redis server accessible without authentication|solution=Set requirepass directive in redis.conf. Bind Redis to localhost or internal IP only. Enable protected-mode.</tags>
+        <refs></refs>
+      </nvt>
+      <threat>Critical</threat>
+      <severity>9.8</severity>
+      <description>The remote Redis server does not require authentication. An attacker can connect and read/write all data in the cache, potentially retrieve sensitive session data, and use the SLAVEOF command to exfiltrate the full dataset.</description>
+      <solution>Add requirepass to redis.conf. Bind Redis to 127.0.0.1. Enable Redis ACL for fine-grained access control. Block port 6379 at firewall.</solution>
+    </result>
+
+    <result id="r-017">
+      <name>Telnet Service Detected — Cleartext Protocol</name>
+      <host>192.168.30.10</host>
+      <port>23/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.10280">
+        <name>Telnet Service Detected — Cleartext Login</name>
+        <family>Useless services</family>
+        <cvss_base>6.5</cvss_base>
+        <tags>solution_type=Mitigation|summary=Telnet service detected, transmits credentials in cleartext|solution=Disable Telnet and replace with SSH. Block TCP 23 at all perimeter devices.</tags>
+        <refs></refs>
+      </nvt>
+      <threat>Medium</threat>
+      <severity>6.5</severity>
+      <description>A Telnet service is running on the remote host. Telnet transmits all data including credentials in cleartext. An attacker with network access can capture credentials using a packet sniffer.</description>
+      <solution>Disable Telnet service immediately. Configure SSH access instead. On Cisco devices: no service telnet. Ensure ACLs block TCP port 23.</solution>
+    </result>
+
+    <result id="r-018">
+      <name>SSL/TLS: TLS 1.0 and TLS 1.1 Protocol Detection</name>
+      <host>192.168.10.20</host>
+      <port>443/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.111111">
+        <name>SSL/TLS: Deprecated TLS Protocol Version Detection</name>
+        <family>SSL and TLS</family>
+        <cvss_base>4.3</cvss_base>
+        <tags>solution_type=Mitigation|summary=Server supports deprecated TLS 1.0 and TLS 1.1|solution=Disable TLS 1.0 and TLS 1.1. Enable only TLS 1.2 and TLS 1.3.</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2011-3389"/>
+        </refs>
+      </nvt>
+      <threat>Low</threat>
+      <severity>4.3</severity>
+      <description>The remote server supports TLS 1.0 and/or TLS 1.1 which are deprecated protocols. These are vulnerable to BEAST, CRIME, and POODLE attacks and should be disabled per NIST SP 800-52r2 guidelines.</description>
+      <solution>Disable TLS 1.0 and TLS 1.1. Configure minimum TLS version to 1.2. Enable TLS 1.3 if supported.</solution>
+    </result>
+
+    <result id="r-019">
+      <name>DNS Server Zone Transfer Allowed</name>
+      <host>192.168.10.5</host>
+      <port>53/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.10595">
+        <name>DNS Zone Transfer (AXFR) Allowed</name>
+        <family>General</family>
+        <cvss_base>7.5</cvss_base>
+        <tags>solution_type=Mitigation|summary=DNS server allows zone transfer to any host|solution=Restrict zone transfers to authorized secondary DNS servers only using ACLs.</tags>
+        <refs></refs>
+      </nvt>
+      <threat>High</threat>
+      <severity>7.5</severity>
+      <description>The DNS server allows zone transfer requests from any host. An attacker can retrieve the complete DNS zone information, mapping all internal hostnames to IP addresses, which greatly assists network reconnaissance.</description>
+      <solution>Restrict zone transfers: allow-transfer { trusted_secondaries; }; in named.conf. Review all DNS records for sensitive internal naming conventions.</solution>
+    </result>
+
+    <result id="r-020">
+      <name>HTTP Security Headers Missing</name>
+      <host>192.168.20.50</host>
+      <port>8080/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.112081">
+        <name>Missing HTTP Security Headers</name>
+        <family>Web application abuses</family>
+        <cvss_base>5.0</cvss_base>
+        <tags>solution_type=Mitigation|summary=Web application missing critical security headers|solution=Add X-Frame-Options, Content-Security-Policy, X-Content-Type-Options, and HSTS headers.</tags>
+        <refs></refs>
+      </nvt>
+      <threat>Medium</threat>
+      <severity>5.0</severity>
+      <description>The web application is missing critical HTTP security headers: X-Frame-Options (clickjacking protection), Content-Security-Policy (XSS mitigation), X-Content-Type-Options (MIME sniffing), and Strict-Transport-Security (protocol downgrade protection).</description>
+      <solution>Add the following headers in web server/application configuration: X-Frame-Options: DENY, Content-Security-Policy: default-src 'self', X-Content-Type-Options: nosniff, Strict-Transport-Security: max-age=31536000; includeSubDomains</solution>
+    </result>
+
+    <result id="r-021">
+      <name>PostgreSQL Default Superuser Password</name>
+      <host>192.168.40.20</host>
+      <port>5432/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.108570">
+        <name>PostgreSQL Default/Weak Superuser Password</name>
+        <family>Databases</family>
+        <cvss_base>9.8</cvss_base>
+        <tags>solution_type=Mitigation|summary=PostgreSQL postgres user has default or weak password|solution=Change postgres superuser password immediately. Restrict PostgreSQL access to application hosts only.</tags>
+        <refs></refs>
+      </nvt>
+      <threat>Critical</threat>
+      <severity>9.8</severity>
+      <description>The PostgreSQL database server was found to be accessible with default or weak superuser credentials. An attacker can gain complete control of the database, read/write all data, and potentially execute OS commands via COPY TO/FROM PROGRAM.</description>
+      <solution>Change postgres password immediately: ALTER USER postgres PASSWORD 'strong_password'; Restrict pg_hba.conf to allow only application service accounts. Disable trust authentication.</solution>
+    </result>
+
+    <result id="r-022">
+      <name>Elasticsearch Unauthenticated Access</name>
+      <host>192.168.40.35</host>
+      <port>9200/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.112310">
+        <name>Elasticsearch Unauthenticated API Access</name>
+        <family>Databases</family>
+        <cvss_base>9.8</cvss_base>
+        <tags>solution_type=Mitigation|summary=Elasticsearch accessible without authentication|solution=Enable X-Pack security. Configure TLS and authentication. Bind to localhost or internal IP only.</tags>
+        <refs></refs>
+      </nvt>
+      <threat>Critical</threat>
+      <severity>9.8</severity>
+      <description>The Elasticsearch node is accessible without authentication. All indices, including potentially sensitive data, can be read, modified, or deleted by any network-reachable host. The cluster configuration and mappings are also exposed.</description>
+      <solution>Enable Elasticsearch security features (xpack.security.enabled: true). Configure TLS for transport and HTTP layers. Implement API key or native realm authentication.</solution>
+    </result>
+
+    <result id="r-023">
+      <name>FTP Anonymous Login Allowed</name>
+      <host>192.168.50.15</host>
+      <port>21/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.10079">
+        <name>Anonymous FTP Login Allowed</name>
+        <family>FTP</family>
+        <cvss_base>5.0</cvss_base>
+        <tags>solution_type=Mitigation|summary=FTP server allows anonymous login|solution=Disable anonymous FTP. Migrate to SFTP or FTPS for encrypted file transfer.</tags>
+        <refs></refs>
+      </nvt>
+      <threat>Medium</threat>
+      <severity>5.0</severity>
+      <description>The remote FTP server permits anonymous logins. Depending on the FTP server configuration, an anonymous user may be able to upload, download, or delete files without authentication.</description>
+      <solution>Disable anonymous FTP login. Consider replacing FTP with SFTP (SSH File Transfer Protocol). Ensure FTP is bound to internal interfaces only.</solution>
+    </result>
+
+    <result id="r-024">
+      <name>Spring Framework Remote Code Execution (Spring4Shell)</name>
+      <host>192.168.20.55</host>
+      <port>8443/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.118001">
+        <name>Spring Framework RCE Vulnerability (Spring4Shell) (CVE-2022-22965)</name>
+        <family>Web application abuses</family>
+        <cvss_base>9.8</cvss_base>
+        <tags>solution_type=VendorFix|summary=Spring Framework RCE via data binding on JDK 9+|solution=Update Spring Framework to 5.3.18 or 5.2.20. Update Spring Boot to 2.6.6 or 2.5.12.</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2022-22965"/>
+        </refs>
+      </nvt>
+      <threat>Critical</threat>
+      <severity>9.8</severity>
+      <description>A Spring MVC or Spring WebFlux application running on JDK 9+ may be vulnerable to remote code execution via data binding. The attack requires the application to run on Tomcat as a WAR deployment and use spring-webmvc or spring-webflux.</description>
+      <solution>Update Spring Framework to 5.3.18+. Apply WAF rules to block class.classLoader, class.protectionDomain, class.module patterns in HTTP parameters.</solution>
+    </result>
+
+    <result id="r-025">
+      <name>Windows Print Spooler RCE — PrintNightmare</name>
+      <host>192.168.20.40</host>
+      <port>445/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.117700">
+        <name>Windows Print Spooler RCE (PrintNightmare) (CVE-2021-34527)</name>
+        <family>Windows</family>
+        <cvss_base>8.8</cvss_base>
+        <tags>solution_type=VendorFix|summary=Windows Print Spooler allows remote code execution|solution=Apply KB5004945. Disable Print Spooler service on non-print servers. Restrict Point and Print to authorized print servers.</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2021-34527"/>
+          <ref type="CVE" id="CVE-2021-1675"/>
+        </refs>
+      </nvt>
+      <threat>High</threat>
+      <severity>8.8</severity>
+      <description>The Windows Print Spooler service is vulnerable to remote code execution. A remote attacker can exploit this to execute arbitrary code with SYSTEM privileges on the target machine. The service is running on a non-print server where it is unnecessary.</description>
+      <solution>Apply Microsoft security update KB5004945. On non-print servers, disable the Print Spooler service: Stop-Service -Name Spooler. Set Print Spooler service startup type to Disabled.</solution>
+    </result>
+
+    <result id="r-026">
+      <name>Heartbleed — OpenSSL TLS Memory Disclosure</name>
+      <host>192.168.10.25</host>
+      <port>443/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.103897">
+        <name>OpenSSL TLS Heartbeat Extension Buffer Over-read Vulnerability (Heartbleed)</name>
+        <family>SSL and TLS</family>
+        <cvss_base>7.5</cvss_base>
+        <tags>solution_type=VendorFix|summary=OpenSSL Heartbleed memory disclosure vulnerability|solution=Update OpenSSL to 1.0.1g or later. Revoke and reissue all TLS certificates after patching.</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2014-0160"/>
+        </refs>
+      </nvt>
+      <threat>High</threat>
+      <severity>7.5</severity>
+      <description>The remote host is running a version of OpenSSL that is vulnerable to Heartbleed. This allows an attacker to read up to 64KB of server memory per request, potentially exposing private keys, session tokens, and user credentials.</description>
+      <solution>Upgrade OpenSSL immediately. After patching, revoke existing TLS certificates and generate new private keys. Inform users to change passwords that may have been exposed.</solution>
+    </result>
+
+    <result id="r-027">
+      <name>Docker API Exposed Without Authentication</name>
+      <host>192.168.40.40</host>
+      <port>2375/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.112005">
+        <name>Docker Remote API Accessible Without Authentication (TCP)</name>
+        <family>General</family>
+        <cvss_base>9.8</cvss_base>
+        <tags>solution_type=Mitigation|summary=Docker Remote API accessible without TLS authentication|solution=Enable TLS client verification for Docker API. Bind Docker to unix socket only. Block TCP 2375/2376 at firewall.</tags>
+        <refs></refs>
+      </nvt>
+      <threat>Critical</threat>
+      <severity>9.8</severity>
+      <description>The Docker Remote API is exposed on TCP port 2375 without authentication or TLS. An attacker can create privileged containers with host filesystem mounts, effectively gaining root access to the host system.</description>
+      <solution>Immediately bind Docker daemon to unix:///var/run/docker.sock only. If remote API is needed, enable TLS client certificate authentication. Block port 2375 at firewall.</solution>
+    </result>
+
+    <result id="r-028">
+      <name>Weak SSH Key Exchange Algorithms</name>
+      <host>192.168.50.10</host>
+      <port>22/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.116509">
+        <name>SSH Weak Key Exchange Algorithms Supported</name>
+        <family>General</family>
+        <cvss_base>4.0</cvss_base>
+        <tags>solution_type=Mitigation|summary=SSH server supports weak key exchange algorithms|solution=Disable weak algorithms in sshd_config: KexAlgorithms. Allow only curve25519-sha256 and ecdh-sha2-nistp256.</tags>
+        <refs></refs>
+      </nvt>
+      <threat>Low</threat>
+      <severity>4.0</severity>
+      <description>The SSH server supports weak key exchange algorithms including diffie-hellman-group1-sha1 and diffie-hellman-group14-sha1. These are considered cryptographically weak and should be disabled.</description>
+      <solution>Edit /etc/ssh/sshd_config: KexAlgorithms curve25519-sha256,ecdh-sha2-nistp256,ecdh-sha2-nistp384. Restart sshd after changes.</solution>
+    </result>
+
+    <result id="r-029">
+      <name>Apache Tomcat AJP Connector Ghostcat</name>
+      <host>192.168.20.55</host>
+      <port>8009/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.108816">
+        <name>Apache Tomcat AJP File Inclusion Vulnerability (Ghostcat) (CVE-2020-1938)</name>
+        <family>Web Servers</family>
+        <cvss_base>9.8</cvss_base>
+        <tags>solution_type=VendorFix|summary=Apache Tomcat AJP connector arbitrary file read|solution=Update Tomcat to 9.0.31, 8.5.51, or 7.0.100. Disable AJP connector if not used.</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2020-1938"/>
+        </refs>
+      </nvt>
+      <threat>Critical</threat>
+      <severity>9.8</severity>
+      <description>Apache Tomcat AJP connector (port 8009) is exposed and vulnerable to Ghostcat. An attacker can read files from anywhere in the web app including WEB-INF/web.xml, potentially leading to remote code execution if file upload is possible.</description>
+      <solution>Disable AJP connector in server.xml if not needed. If AJP is required, require authentication via secret attribute: &lt;Connector port="8009" protocol="AJP/1.3" secret="strong_secret"&gt;</solution>
+    </result>
+
+    <result id="r-030">
+      <name>Grafana Path Traversal — Unauthorized Plugin Access</name>
+      <host>192.168.40.45</host>
+      <port>3000/tcp</port>
+      <nvt oid="1.3.6.1.4.1.25623.1.0.117899">
+        <name>Grafana Unauthenticated Arbitrary File Read (CVE-2021-43798)</name>
+        <family>Web application abuses</family>
+        <cvss_base>7.5</cvss_base>
+        <tags>solution_type=VendorFix|summary=Grafana path traversal in plugin endpoint|solution=Update Grafana to version 8.3.1, 8.2.7, 8.1.8, or 8.0.7.</tags>
+        <refs>
+          <ref type="CVE" id="CVE-2021-43798"/>
+        </refs>
+      </nvt>
+      <threat>High</threat>
+      <severity>7.5</severity>
+      <description>Grafana versions 8.0.0-beta1 through 8.3.0 are vulnerable to an unauthenticated path traversal attack via the plugin endpoint. An attacker can read arbitrary files on the server including /etc/passwd, database credentials, and configuration files.</description>
+      <solution>Update Grafana to 8.3.1 or later. As interim mitigation, block access to the /public/plugins/ endpoint path. Review Grafana config for hardcoded credentials.</solution>
+    </result>
+
+  </results>
+</report>

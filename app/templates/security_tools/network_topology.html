@@ -3,107 +3,197 @@
 <div class="flex items-center justify-between mb-6">
   <h2 class="text-3xl font-bold tracking-tight">Interactive Network Topology</h2>
   <div class="flex gap-2">
-      <button class="px-4 py-2 text-sm border rounded-md bg-accent text-accent-foreground">Logical Design</button>
-      <button class="px-4 py-2 text-sm border rounded-md hover:bg-accent transition-colors">Physical Design</button>
+    <button onclick="topoTab('logical')" id="ttab-logical" class="ttab-btn px-4 py-2 text-sm border rounded-md bg-accent text-accent-foreground">Logical Design</button>
+    <button onclick="topoTab('gns3')" id="ttab-gns3" class="ttab-btn px-4 py-2 text-sm border rounded-md hover:bg-accent transition-colors text-muted-foreground">GNS3 Simulation</button>
   </div>
 </div>
 
-<div class="grid gap-6 lg:grid-cols-4">
-  <div class="lg:col-span-3 rounded-xl border bg-card shadow p-8 min-h-[600px] flex items-center justify-center relative overflow-hidden">
-    <!-- Simulated SVG Network Diagram -->
-    <svg width="100%" height="550" viewBox="0 0 800 550" class="max-w-4xl">
-      <!-- Core Router -->
-      <circle cx="400" cy="250" r="40" fill="none" stroke="currentColor" stroke-width="2" />
-      <text x="400" y="255" text-anchor="middle" font-size="12" fill="currentColor" class="font-bold">TDM-RTR-CORE01</text>
-      
-      <!-- External Network / Internet -->
-      <path d="M 400 30 L 400 80" stroke="currentColor" stroke-width="2" stroke-dasharray="4" />
-      <rect x="350" y="10" width="100" height="40" rx="5" fill="none" stroke="currentColor" stroke-width="1" />
-      <text x="400" y="35" text-anchor="middle" font-size="10" fill="currentColor">Internet</text>
-      
-      <!-- Firewall -->
-      <rect x="370" y="100" width="60" height="40" rx="2" fill="none" stroke="currentColor" stroke-width="2" />
-      <text x="400" y="125" text-anchor="middle" font-size="10" fill="currentColor" class="font-bold">Firewall</text>
-      <line x1="400" y1="140" x2="400" y2="210" stroke="currentColor" stroke-width="2" />
-
-      <!-- Departments / VLANs -->
-      <!-- IT Department -->
-      <line x1="400" y1="250" x2="200" y2="150" stroke="currentColor" stroke-width="2" />
-      <circle cx="200" cy="150" r="25" fill="none" stroke="#22c55e" stroke-width="2" />
-      <text x="200" y="155" text-anchor="middle" font-size="10" fill="currentColor">IT Dept</text>
-      
-      <!-- Finance -->
-      <line x1="400" y1="250" x2="150" y2="350" stroke="currentColor" stroke-width="2" />
-      <circle cx="150" cy="350" r="25" fill="none" stroke="#ef4444" stroke-width="2" />
-      <text x="150" y="355" text-anchor="middle" font-size="10" fill="currentColor">Finance</text>
-      
-      <!-- HR -->
-      <line x1="400" y1="250" x2="400" y2="450" stroke="currentColor" stroke-width="2" />
-      <circle cx="400" cy="450" r="25" fill="none" stroke="#eab308" stroke-width="2" />
-      <text x="400" y="455" text-anchor="middle" font-size="10" fill="currentColor">HR Dept</text>
-      
-      <!-- Admin -->
-      <line x1="400" y1="250" x2="650" y2="350" stroke="currentColor" stroke-width="2" />
-      <circle cx="650" cy="350" r="25" fill="none" stroke="#22c55e" stroke-width="2" />
-      <text x="650" y="355" text-anchor="middle" font-size="10" fill="currentColor">Admin</text>
-      
-      <!-- Smart Infra -->
-      <line x1="400" y1="250" x2="600" y2="150" stroke="currentColor" stroke-width="2" />
-      <circle cx="600" cy="150" r="25" fill="none" stroke="#ef4444" stroke-width="2" />
-      <text x="600" y="155" text-anchor="middle" font-size="10" fill="currentColor">IoT Infra</text>
-      
-      <!-- Labels -->
-      <text x="200" y="115" text-anchor="middle" font-size="8" fill="muted-foreground">192.168.10.0/24</text>
-      <text x="100" y="355" text-anchor="middle" font-size="8" fill="muted-foreground">192.168.20.0/24</text>
-      <text x="400" y="490" text-anchor="middle" font-size="8" fill="muted-foreground">192.168.30.0/24</text>
-      <text x="700" y="355" text-anchor="middle" font-size="8" fill="muted-foreground">192.168.40.0/24</text>
-      <text x="600" y="115" text-anchor="middle" font-size="8" fill="muted-foreground">192.168.50.0/24</text>
-    </svg>
-    
-    <div class="absolute bottom-6 right-6 p-4 bg-background/80 border rounded-lg text-xs space-y-2 backdrop-blur">
+<!-- Logical topology -->
+<div id="topo-logical">
+  <div class="grid gap-6 lg:grid-cols-4">
+    <div class="lg:col-span-3 rounded-xl border bg-card shadow p-8 min-h-[600px] flex items-center justify-center relative overflow-hidden">
+      <svg width="100%" height="550" viewBox="0 0 800 550" class="max-w-4xl">
+        <circle cx="400" cy="250" r="40" fill="none" stroke="currentColor" stroke-width="2" />
+        <text x="400" y="255" text-anchor="middle" font-size="12" fill="currentColor" class="font-bold">TDM-RTR-CORE01</text>
+        <path d="M 400 30 L 400 80" stroke="currentColor" stroke-width="2" stroke-dasharray="4" />
+        <rect x="350" y="10" width="100" height="40" rx="5" fill="none" stroke="currentColor" stroke-width="1" />
+        <text x="400" y="35" text-anchor="middle" font-size="10" fill="currentColor">Internet</text>
+        <rect x="370" y="100" width="60" height="40" rx="2" fill="none" stroke="currentColor" stroke-width="2" />
+        <text x="400" y="125" text-anchor="middle" font-size="10" fill="currentColor" class="font-bold">Firewall</text>
+        <line x1="400" y1="140" x2="400" y2="210" stroke="currentColor" stroke-width="2" />
+        <line x1="400" y1="250" x2="200" y2="150" stroke="currentColor" stroke-width="2" />
+        <circle cx="200" cy="150" r="25" fill="none" stroke="#22c55e" stroke-width="2" />
+        <text x="200" y="155" text-anchor="middle" font-size="10" fill="currentColor">IT Dept</text>
+        <line x1="400" y1="250" x2="150" y2="350" stroke="currentColor" stroke-width="2" />
+        <circle cx="150" cy="350" r="25" fill="none" stroke="#ef4444" stroke-width="2" />
+        <text x="150" y="355" text-anchor="middle" font-size="10" fill="currentColor">Finance</text>
+        <line x1="400" y1="250" x2="400" y2="450" stroke="currentColor" stroke-width="2" />
+        <circle cx="400" cy="450" r="25" fill="none" stroke="#eab308" stroke-width="2" />
+        <text x="400" y="455" text-anchor="middle" font-size="10" fill="currentColor">HR Dept</text>
+        <line x1="400" y1="250" x2="650" y2="350" stroke="currentColor" stroke-width="2" />
+        <circle cx="650" cy="350" r="25" fill="none" stroke="#22c55e" stroke-width="2" />
+        <text x="650" y="355" text-anchor="middle" font-size="10" fill="currentColor">Admin</text>
+        <line x1="400" y1="250" x2="600" y2="150" stroke="currentColor" stroke-width="2" />
+        <circle cx="600" cy="150" r="25" fill="none" stroke="#ef4444" stroke-width="2" />
+        <text x="600" y="155" text-anchor="middle" font-size="10" fill="currentColor">IoT Infra</text>
+        <text x="200" y="115" text-anchor="middle" font-size="8" fill="muted-foreground">192.168.10.0/24</text>
+        <text x="100" y="355" text-anchor="middle" font-size="8" fill="muted-foreground">192.168.20.0/24</text>
+        <text x="400" y="490" text-anchor="middle" font-size="8" fill="muted-foreground">192.168.30.0/24</text>
+        <text x="700" y="355" text-anchor="middle" font-size="8" fill="muted-foreground">192.168.40.0/24</text>
+        <text x="600" y="115" text-anchor="middle" font-size="8" fill="muted-foreground">192.168.50.0/24</text>
+      </svg>
+      <div class="absolute bottom-6 right-6 p-4 bg-background/80 border rounded-lg text-xs space-y-2 backdrop-blur">
         <p class="font-bold border-b pb-1 mb-2">Network Health Legend</p>
         <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-green-500"></span> Healthy (No Critical Vulns)</div>
         <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-yellow-500"></span> Caution (Medium Vulns)</div>
         <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500"></span> High Risk (Critical Vulns)</div>
+      </div>
     </div>
-  </div>
-  
-  <div class="space-y-6">
-    <div class="rounded-xl border bg-card shadow p-6">
+    <div class="space-y-6">
+      <div class="rounded-xl border bg-card shadow p-6">
         <h3 class="font-semibold mb-4">Network Segmentation</h3>
         <div class="space-y-4 text-sm">
-            <div class="p-3 rounded-md bg-muted/50 border">
-                <p class="font-bold text-xs text-accent uppercase">IT Department</p>
-                <p class="text-muted-foreground mt-1">Full access to server segment. Restricted external RDP.</p>
-            </div>
-            <div class="p-3 rounded-md bg-muted/50 border">
-                <p class="font-bold text-xs text-accent uppercase">IoT Infra</p>
-                <p class="text-muted-foreground mt-1">Isolated VLAN. Only MQTT access allowed to TDM-IOT-SRV.</p>
-            </div>
-            <div class="p-3 rounded-md bg-muted/50 border">
-                <p class="font-bold text-xs text-accent uppercase">Finance</p>
-                <p class="text-muted-foreground mt-1">Strict RBAC. Encrypted SMB required for all shares.</p>
-            </div>
+          <div class="p-3 rounded-md bg-muted/50 border"><p class="font-bold text-xs text-accent uppercase">IT Department</p><p class="text-muted-foreground mt-1">Full access to server segment. Restricted external RDP.</p></div>
+          <div class="p-3 rounded-md bg-muted/50 border"><p class="font-bold text-xs text-accent uppercase">IoT Infra</p><p class="text-muted-foreground mt-1">Isolated VLAN. Only MQTT access allowed to TDM-IOT-SRV.</p></div>
+          <div class="p-3 rounded-md bg-muted/50 border"><p class="font-bold text-xs text-accent uppercase">Finance</p><p class="text-muted-foreground mt-1">Strict RBAC. Encrypted SMB required for all shares.</p></div>
         </div>
-    </div>
-    
-    <div class="rounded-xl border bg-card shadow p-6">
+      </div>
+      <div class="rounded-xl border bg-card shadow p-6">
         <h3 class="font-semibold mb-4">Security Components</h3>
         <ul class="space-y-3 text-sm">
-            <li class="flex items-center justify-between">
-                <span class="text-muted-foreground">Firewall Policy</span>
-                <span class="font-bold text-green-500">Enforced</span>
-            </li>
-            <li class="flex items-center justify-between">
-                <span class="text-muted-foreground">IDS/IPS Mode</span>
-                <span class="font-bold text-accent">Active Prevention</span>
-            </li>
-            <li class="flex items-center justify-between">
-                <span class="text-muted-foreground">SIEM Correlation</span>
-                <span class="font-bold text-accent">Real-time</span>
-            </li>
+          <li class="flex items-center justify-between"><span class="text-muted-foreground">Firewall Policy</span><span class="font-bold text-green-500">Enforced</span></li>
+          <li class="flex items-center justify-between"><span class="text-muted-foreground">IDS/IPS Mode</span><span class="font-bold text-accent">Active Prevention</span></li>
+          <li class="flex items-center justify-between"><span class="text-muted-foreground">SIEM Correlation</span><span class="font-bold text-accent">Real-time</span></li>
         </ul>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- GNS3 tab -->
+<div id="topo-gns3" class="hidden">
+  <div class="grid gap-6 lg:grid-cols-3 mb-6">
+    <!-- Server status card -->
+    <div class="rounded-xl border {% if gns3.connected %}border-green-900/50 bg-green-950/10{% else %}border-red-900/50 bg-red-950/10{% endif %} shadow p-5">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="w-3 h-3 rounded-full {% if gns3.connected %}bg-green-500 animate-pulse{% else %}bg-red-500{% endif %}"></span>
+        <h3 class="font-semibold">GNS3 Server</h3>
+        <span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">Simulated</span>
+      </div>
+      <div class="space-y-1 text-xs">
+        <div class="flex justify-between"><span class="text-muted-foreground">Host</span><span class="font-mono">{{ gns3.server }}:{{ gns3.port }}</span></div>
+        <div class="flex justify-between"><span class="text-muted-foreground">Version</span><span class="font-mono">GNS3 {{ gns3.version }}</span></div>
+        <div class="flex justify-between"><span class="text-muted-foreground">Status</span><span class="{% if gns3.connected %}text-green-400{% else %}text-red-400{% endif %} font-bold">{% if gns3.connected %}Connected{% else %}Disconnected{% endif %}</span></div>
+        <div class="flex justify-between"><span class="text-muted-foreground">Project</span><span class="truncate ml-2">{{ gns3.project_name }}</span></div>
+      </div>
+    </div>
+    <div class="rounded-xl border bg-card shadow p-5">
+      <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Running Nodes</p>
+      <p class="text-3xl font-bold text-green-400">{{ gns3.nodes_running }}</p>
+      <p class="text-xs text-muted-foreground mt-1">of {{ gns3.nodes_total }} total</p>
+    </div>
+    <div class="rounded-xl border bg-card shadow p-5">
+      <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Stopped Nodes</p>
+      <p class="text-3xl font-bold text-muted-foreground">{{ gns3.nodes_stopped }}</p>
+      <div class="mt-3 flex gap-2">
+        <button onclick="exportGns3Project()" class="text-xs px-3 py-1.5 border rounded hover:bg-accent transition-colors">Export .gns3project</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Node list -->
+  <div class="rounded-xl border bg-card shadow overflow-hidden mb-6">
+    <div class="p-4 border-b flex items-center justify-between">
+      <h3 class="font-semibold text-sm">GNS3 Nodes — {{ gns3.project_name }}</h3>
+      <span class="text-xs text-muted-foreground">Project ID: {{ gns3.project_id }}</span>
+    </div>
+    <table class="w-full text-xs">
+      <thead>
+        <tr class="bg-muted/50 border-b">
+          <th class="text-left py-3 px-4">Node Name</th>
+          <th class="text-left py-3 px-4">Type</th>
+          <th class="text-left py-3 px-4">Template</th>
+          <th class="text-left py-3 px-4">Interfaces</th>
+          <th class="text-left py-3 px-4">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dev in gns3.devices %}
+        <tr class="border-b hover:bg-muted/20">
+          <td class="py-2 px-4 font-mono font-bold">{{ dev.name }}</td>
+          <td class="py-2 px-4">{{ dev.type }}</td>
+          <td class="py-2 px-4 text-muted-foreground">{{ dev.template }}</td>
+          <td class="py-2 px-4">{{ dev.interfaces | join(', ') }}</td>
+          <td class="py-2 px-4">
+            {% if dev.status == 'running' %}
+            <span class="inline-flex items-center gap-1 text-green-400 font-bold">
+              <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Running
+            </span>
+            {% else %}
+            <span class="text-muted-foreground">Stopped</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Command reference -->
+  <div class="rounded-xl border bg-card shadow p-5">
+    <h3 class="font-semibold text-sm mb-3">GNS3 Command Reference</h3>
+    <div class="grid gap-3 md:grid-cols-2">
+      <div>
+        <p class="text-xs font-bold text-muted-foreground uppercase mb-2">Start/Stop Nodes</p>
+        <pre class="bg-black text-green-400 font-mono text-xs p-3 rounded-lg overflow-x-auto">curl -X POST http://localhost:3080/v2/projects/{{ gns3.project_id }}/nodes/start
+curl -X POST http://localhost:3080/v2/projects/{{ gns3.project_id }}/nodes/stop</pre>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-muted-foreground uppercase mb-2">List Nodes via API</p>
+        <pre class="bg-black text-green-400 font-mono text-xs p-3 rounded-lg overflow-x-auto">curl http://localhost:3080/v2/projects/{{ gns3.project_id }}/nodes</pre>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-muted-foreground uppercase mb-2">Connect Console (Telnet)</p>
+        <pre class="bg-black text-green-400 font-mono text-xs p-3 rounded-lg overflow-x-auto">telnet localhost &lt;console_port&gt;
+# Get console port from node properties</pre>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-muted-foreground uppercase mb-2">Import Project</p>
+        <pre class="bg-black text-green-400 font-mono text-xs p-3 rounded-lg overflow-x-auto">curl -X POST http://localhost:3080/v2/projects/import \
+  -F "file=@tadamun_lab.gns3project"</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function topoTab(name) {
+  document.getElementById('topo-logical').classList.toggle('hidden', name !== 'logical');
+  document.getElementById('topo-gns3').classList.toggle('hidden', name !== 'gns3');
+  document.querySelectorAll('.ttab-btn').forEach(b => {
+    b.classList.remove('bg-accent', 'text-accent-foreground');
+    b.classList.add('text-muted-foreground');
+  });
+  const btn = document.getElementById('ttab-' + name);
+  btn.classList.add('bg-accent', 'text-accent-foreground');
+  btn.classList.remove('text-muted-foreground');
+}
+
+function exportGns3Project() {
+  const project = {
+    "name": "{{ gns3.project_name }}",
+    "project_id": "{{ gns3.project_id }}",
+    "version": "{{ gns3.version }}",
+    "type": "topology",
+    "nodes": {{ gns3.devices | tojson }},
+    "links": [],
+    "drawings": []
+  };
+  const blob = new Blob([JSON.stringify(project, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tadamun_lab.gns3project';
+  a.click();
+}
+</script>
 {% endblock %}

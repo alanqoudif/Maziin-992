@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center gap-3">
+    <h2 class="text-3xl font-bold tracking-tight">VPN & TLS Inspection</h2>
+    <span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded font-medium">Simulated</span>
+  </div>
+  <span class="text-xs text-muted-foreground">IPsec / OpenVPN / WireGuard — Chapter 3.4.2 & 3.7.2</span>
+</div>
+
+<!-- Summary stats -->
+<div class="grid gap-4 md:grid-cols-5 mb-8">
+  <div class="rounded-xl border bg-card shadow p-5">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Active VPN Sessions</p>
+    <p class="text-3xl font-bold">{{ vpn_sessions | length }}</p>
+  </div>
+  <div class="rounded-xl border border-red-900/50 bg-red-950/20 shadow p-5">
+    <p class="text-xs text-red-400 uppercase font-bold mb-1">Expired Certs</p>
+    <p class="text-3xl font-bold text-red-400">{{ tls_expired | length }}</p>
+  </div>
+  <div class="rounded-xl border border-yellow-900/50 bg-yellow-950/20 shadow p-5">
+    <p class="text-xs text-yellow-400 uppercase font-bold mb-1">Expiring Soon</p>
+    <p class="text-3xl font-bold text-yellow-400">{{ tls_expiring | length }}</p>
+  </div>
+  <div class="rounded-xl border border-orange-900/50 bg-orange-950/20 shadow p-5">
+    <p class="text-xs text-orange-400 uppercase font-bold mb-1">Non-Compliant TLS</p>
+    <p class="text-3xl font-bold text-orange-400">{{ tls_noncompliant | length }}</p>
+  </div>
+  <div class="rounded-xl border bg-card shadow p-5">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">TLS Certificates</p>
+    <p class="text-3xl font-bold">{{ tls_certs | length }}</p>
+  </div>
+</div>
+
+<!-- TLS compliance bar -->
+<div class="rounded-xl border bg-card shadow p-5 mb-6">
+  <h3 class="font-semibold text-sm mb-3">TLS Protocol Version Compliance</h3>
+  <div class="space-y-2">
+    {% for version, count in tls_versions.items() | sort %}
+    <div class="flex items-center gap-3">
+      <span class="text-xs font-mono w-24 text-right {% if 'TLS 1.3' in version %}text-green-400{% elif 'TLS 1.2' in version %}text-yellow-400{% else %}text-red-400{% endif %}">{{ version }}</span>
+      <div class="flex-1 bg-muted rounded-full h-2">
+        <div class="h-2 rounded-full {% if 'TLS 1.3' in version %}bg-green-500{% elif 'TLS 1.2' in version %}bg-yellow-500{% else %}bg-red-500{% endif %}" style="width: {{ (count / tls_certs | length * 100) | round | int }}%"></div>
+      </div>
+      <span class="text-xs text-muted-foreground w-8 text-right">{{ count }}</span>
+      <span class="text-xs {% if 'TLS 1.3' in version %}text-green-400{% elif 'TLS 1.2' in version %}text-yellow-400{% else %}text-red-400 font-bold{% endif %}">
+        {% if 'TLS 1.3' in version %}✓ Recommended{% elif 'TLS 1.2' in version %}⚠ Acceptable{% else %}✗ Deprecated{% endif %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- VPN Sessions -->
+<div class="rounded-xl border bg-card shadow overflow-hidden mb-8">
+  <div class="p-4 border-b">
+    <h3 class="font-semibold text-sm">Active VPN Connections</h3>
+  </div>
+  <table id="vpnTable" class="w-full text-xs">
+    <thead>
+      <tr class="bg-muted/50 border-b">
+        <th class="text-left py-3 px-3">User</th>
+        <th class="text-left py-3 px-3">Real IP</th>
+        <th class="text-left py-3 px-3">VPN IP</th>
+        <th class="text-left py-3 px-3">Protocol</th>
+        <th class="text-left py-3 px-3">Duration</th>
+        <th class="text-left py-3 px-3">RX</th>
+        <th class="text-left py-3 px-3">TX</th>
+        <th class="text-left py-3 px-3">Location</th>
+        <th class="text-left py-3 px-3">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in vpn_sessions %}
+      <tr class="border-b hover:bg-muted/20">
+        <td class="py-2 px-3 font-semibold">{{ s.user }}</td>
+        <td class="py-2 px-3 font-mono">{{ s.real_ip }}</td>
+        <td class="py-2 px-3 font-mono text-green-400">{{ s.vpn_ip }}</td>
+        <td class="py-2 px-3">
+          <span class="{% if 'WireGuard' in s.protocol %}text-teal-400{% elif 'IPsec' in s.protocol %}text-blue-400{% else %}text-orange-400{% endif %} font-medium">
+            {{ s.protocol }}
+          </span>
+        </td>
+        <td class="py-2 px-3 font-mono">{{ s.duration }}</td>
+        <td class="py-2 px-3 text-muted-foreground">{{ s.bytes_in_fmt }}</td>
+        <td class="py-2 px-3 text-muted-foreground">{{ s.bytes_out_fmt }}</td>
+        <td class="py-2 px-3">{{ s.location }}</td>
+        <td class="py-2 px-3">
+          <span class="inline-flex items-center gap-1 text-green-400 font-bold">
+            <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse"></span>
+            Active
+          </span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- TLS Certificate Inventory -->
+<div class="rounded-xl border bg-card shadow overflow-hidden">
+  <div class="p-4 border-b flex items-center justify-between">
+    <h3 class="font-semibold text-sm">TLS Certificate Inventory</h3>
+    <div class="flex gap-2 text-xs">
+      <span class="text-green-400">● Valid</span>
+      <span class="text-yellow-400">● Expiring</span>
+      <span class="text-red-400">● Expired</span>
+    </div>
+  </div>
+  <table id="tlsTable" class="w-full text-xs">
+    <thead>
+      <tr class="bg-muted/50 border-b">
+        <th class="text-left py-3 px-3">Service</th>
+        <th class="text-left py-3 px-3">Domain</th>
+        <th class="text-left py-3 px-3">Issuer</th>
+        <th class="text-left py-3 px-3">TLS</th>
+        <th class="text-left py-3 px-3">Cipher</th>
+        <th class="text-left py-3 px-3">Key Bits</th>
+        <th class="text-left py-3 px-3">Expires</th>
+        <th class="text-left py-3 px-3">Days Left</th>
+        <th class="text-left py-3 px-3">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cert in tls_certs %}
+      <tr class="border-b hover:bg-muted/20 {% if cert.status == 'expired' %}bg-red-950/10{% elif cert.status == 'expiring_soon' %}bg-yellow-950/10{% endif %}">
+        <td class="py-2 px-3 font-semibold">{{ cert.service }}</td>
+        <td class="py-2 px-3 font-mono text-xs">{{ cert.domain }}</td>
+        <td class="py-2 px-3 text-muted-foreground max-w-[160px]">{{ cert.issuer }}</td>
+        <td class="py-2 px-3">
+          <span class="font-bold {% if 'TLS 1.3' in cert.tls_version %}text-green-400{% elif 'TLS 1.2' in cert.tls_version %}text-yellow-400{% else %}text-red-400{% endif %}">
+            {{ cert.tls_version }}
+          </span>
+        </td>
+        <td class="py-2 px-3 font-mono text-xs text-muted-foreground">{{ cert.cipher }}</td>
+        <td class="py-2 px-3 {% if cert.key_bits >= 2048 %}text-green-400{% else %}text-red-400 font-bold{% endif %}">{{ cert.key_bits }}b</td>
+        <td class="py-2 px-3 font-mono">{{ cert.not_after }}</td>
+        <td class="py-2 px-3 font-bold {% if cert.days_remaining <= 0 %}text-red-400{% elif cert.days_remaining <= 14 %}text-yellow-400{% else %}text-muted-foreground{% endif %}">
+          {% if cert.days_remaining < 0 %}{{ cert.days_remaining }}d{% else %}{{ cert.days_remaining }}d{% endif %}
+        </td>
+        <td class="py-2 px-3">
+          {% if cert.status == 'expired' %}
+          <span class="inline-flex items-center gap-1 text-xs font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded">✗ EXPIRED</span>
+          {% elif cert.status == 'expiring_soon' %}
+          <span class="inline-flex items-center gap-1 text-xs font-bold text-yellow-400 bg-yellow-500/10 px-2 py-0.5 rounded">⚠ EXPIRING</span>
+          {% else %}
+          <span class="inline-flex items-center gap-1 text-xs font-bold text-green-400 bg-green-500/10 px-2 py-0.5 rounded">✓ Valid</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+$(document).ready(function() {
+  $('#vpnTable').DataTable({ pageLength: 25, order: [[4, 'desc']] });
+  $('#tlsTable').DataTable({ pageLength: 25, order: [[7, 'asc']] });
+});
+</script>
+{% endblock %}

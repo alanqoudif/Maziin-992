@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center gap-3">
+    <h2 class="text-3xl font-bold tracking-tight">Endpoint Security (EDR)</h2>
+    <span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded font-medium">Simulated</span>
+    <span class="text-xs bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded font-medium">CrowdStrike Falcon-style</span>
+  </div>
+  <span class="text-xs text-muted-foreground">ESTHT — Chapter 3.4</span>
+</div>
+
+<!-- Stats -->
+<div class="grid gap-4 md:grid-cols-5 mb-8">
+  <div class="rounded-xl border border-green-900/50 bg-green-950/10 shadow p-5">
+    <p class="text-xs text-green-400 uppercase font-bold mb-1">Online Agents</p>
+    <p class="text-3xl font-bold text-green-400">{{ online }}</p>
+  </div>
+  <div class="rounded-xl border bg-card shadow p-5">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Offline</p>
+    <p class="text-3xl font-bold">{{ offline }}</p>
+  </div>
+  <div class="rounded-xl border border-orange-900/50 bg-orange-950/10 shadow p-5">
+    <p class="text-xs text-orange-400 uppercase font-bold mb-1">Isolated</p>
+    <p class="text-3xl font-bold text-orange-400">{{ isolated }}</p>
+  </div>
+  <div class="rounded-xl border border-red-900/50 bg-red-950/10 shadow p-5">
+    <p class="text-xs text-red-400 uppercase font-bold mb-1">Total Threats</p>
+    <p class="text-3xl font-bold text-red-400">{{ total_threats }}</p>
+  </div>
+  <div class="rounded-xl border bg-card shadow p-5">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Total Endpoints</p>
+    <p class="text-3xl font-bold">{{ agents | length }}</p>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="mb-4 border-b border-border">
+  <div class="flex gap-0">
+    <button onclick="edrTab('agents')" id="etab-agents" class="etab-btn px-5 py-2.5 text-sm font-medium border-b-2 border-blue-400 text-foreground">Agents ({{ agents | length }})</button>
+    <button onclick="edrTab('threats')" id="etab-threats" class="etab-btn px-5 py-2.5 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground">Threats ({{ threats | length }})</button>
+    <button onclick="edrTab('hunt')" id="etab-hunt" class="etab-btn px-5 py-2.5 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground">Threat Hunt</button>
+    {% if compromised %}
+    <button onclick="edrTab('tree')" id="etab-tree" class="etab-btn px-5 py-2.5 text-sm font-medium border-b-2 border-transparent text-red-400 hover:text-red-300">Process Tree ⚠</button>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Agents tab -->
+<div id="edr-agents">
+  <div class="rounded-xl border bg-card shadow overflow-hidden">
+    <table id="agentsTable" class="w-full text-xs">
+      <thead>
+        <tr class="bg-muted/50 border-b">
+          <th class="text-left py-3 px-3">Hostname</th>
+          <th class="text-left py-3 px-3">IP</th>
+          <th class="text-left py-3 px-3">Department</th>
+          <th class="text-left py-3 px-3">OS</th>
+          <th class="text-left py-3 px-3">Agent Ver</th>
+          <th class="text-left py-3 px-3">Status</th>
+          <th class="text-left py-3 px-3">Last Seen</th>
+          <th class="text-left py-3 px-3">Threats</th>
+          <th class="text-left py-3 px-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for agent in agents %}
+        <tr class="border-b hover:bg-muted/20 {% if agent.isolated %}bg-orange-950/10{% endif %}" id="agent-row-{{ agent.id }}">
+          <td class="py-2 px-3 font-mono font-bold">{{ agent.device.hostname if agent.device else '—' }}</td>
+          <td class="py-2 px-3 font-mono">{{ agent.device.ip_address if agent.device else '—' }}</td>
+          <td class="py-2 px-3">{{ agent.device.department if agent.device else '—' }}</td>
+          <td class="py-2 px-3 text-muted-foreground">{{ agent.device.os if agent.device else '—' }}</td>
+          <td class="py-2 px-3 font-mono text-muted-foreground">{{ agent.agent_version }}</td>
+          <td class="py-2 px-3">
+            {% if agent.isolated %}
+            <span class="inline-flex items-center gap-1 text-xs font-bold text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded">🔒 Isolated</span>
+            {% elif agent.status == 'online' %}
+            <span class="inline-flex items-center gap-1 text-xs text-green-400"><span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Online</span>
+            {% elif agent.status == 'error' %}
+            <span class="inline-flex items-center gap-1 text-xs text-red-400"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Error</span>
+            {% else %}
+            <span class="text-muted-foreground">Offline</span>
+            {% endif %}
+          </td>
+          <td class="py-2 px-3 text-muted-foreground">{{ agent.last_seen.strftime('%m/%d %H:%M') if agent.last_seen else '—' }}</td>
+          <td class="py-2 px-3">
+            {% if agent.threats_detected > 0 %}
+            <span class="font-bold text-red-400">{{ agent.threats_detected }}</span>
+            {% else %}
+            <span class="text-muted-foreground">0</span>
+            {% endif %}
+          </td>
+          <td class="py-2 px-3">
+            <button onclick="isolateEndpoint({{ agent.id }})" id="isolate-btn-{{ agent.id }}"
+              class="text-xs px-2 py-0.5 rounded border transition-colors {{ 'bg-green-500/20 text-green-400 border-green-700/50' if not agent.isolated else 'bg-orange-500/20 text-orange-400 border-orange-700/50' }}">
+              {{ 'Isolate' if not agent.isolated else 'Un-Isolate' }}
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Threats tab -->
+<div id="edr-threats" class="hidden">
+  {% if threats %}
+  <div class="rounded-xl border bg-card shadow overflow-hidden">
+    <table id="threatsTable" class="w-full text-xs">
+      <thead>
+        <tr class="bg-muted/50 border-b">
+          <th class="text-left py-3 px-3">Hostname</th>
+          <th class="text-left py-3 px-3">Threat Name</th>
+          <th class="text-left py-3 px-3">Type</th>
+          <th class="text-left py-3 px-3">Severity</th>
+          <th class="text-left py-3 px-3">Process</th>
+          <th class="text-left py-3 px-3">Path</th>
+          <th class="text-left py-3 px-3">Detected</th>
+          <th class="text-left py-3 px-3">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in threats %}
+        <tr class="border-b hover:bg-muted/20">
+          <td class="py-2 px-3 font-mono font-bold">{{ t.hostname }}</td>
+          <td class="py-2 px-3 font-bold text-red-400">{{ t.name }}</td>
+          <td class="py-2 px-3">{{ t.type }}</td>
+          <td class="py-2 px-3">
+            <span class="font-bold text-xs {% if t.severity == 'critical' %}text-red-400{% elif t.severity == 'high' %}text-orange-400{% else %}text-yellow-400{% endif %}">{{ t.severity | upper }}</span>
+          </td>
+          <td class="py-2 px-3 font-mono">{{ t.process }}</td>
+          <td class="py-2 px-3 font-mono text-muted-foreground max-w-[200px] truncate">{{ t.path }}</td>
+          <td class="py-2 px-3 text-muted-foreground">{{ t.detected }}</td>
+          <td class="py-2 px-3"><span class="text-xs font-bold text-orange-400">{{ t.status }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="rounded-xl border bg-card shadow p-8 text-center">
+    <p class="text-muted-foreground text-sm">No threats detected. Endpoint agents are healthy.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Hunt tab -->
+<div id="edr-hunt" class="hidden">
+  <div class="rounded-xl border bg-card shadow p-5">
+    <h3 class="font-semibold text-sm mb-4">Pre-Built Threat Hunt Queries</h3>
+    <div class="space-y-3">
+      {% for q in hunt_queries %}
+      <div class="rounded-lg border p-4 hover:bg-muted/20 transition-colors">
+        <div class="flex items-start justify-between mb-2">
+          <div>
+            <p class="font-semibold text-sm">{{ q.name }}</p>
+            <span class="text-xs bg-muted px-2 py-0.5 rounded text-muted-foreground">{{ q.category }}</span>
+          </div>
+          <div class="text-right">
+            {% if q.matches > 0 %}
+            <span class="text-xs font-bold text-red-400">{{ q.matches }} match(es)</span>
+            {% else %}
+            <span class="text-xs text-green-400">No matches</span>
+            {% endif %}
+          </div>
+        </div>
+        <code class="text-xs font-mono text-muted-foreground bg-black/30 px-2 py-1 rounded block">{{ q.query }}</code>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Process tree tab -->
+{% if compromised %}
+<div id="edr-tree" class="hidden">
+  <div class="rounded-xl border border-red-900/50 bg-red-950/10 shadow p-5">
+    <h3 class="font-semibold text-sm mb-2 text-red-400">⚠ Compromised Endpoint — Attack Chain Process Tree</h3>
+    <p class="text-xs text-muted-foreground mb-4">Host: <span class="font-mono font-bold">{{ compromised.device.hostname if compromised.device else 'Unknown' }}</span> — Suspicious process tree detected by EDR behavioral engine</p>
+    {% set tree = compromised.process_tree() %}
+    {% if tree %}
+    <div class="bg-black rounded-lg p-4 font-mono text-xs overflow-x-auto">
+      <div id="processTree" class="text-green-400"></div>
+    </div>
+    <script>
+    const treeData = {{ compromised.process_tree_json | safe }};
+    function renderTree(node, prefix, isLast, container) {
+      const connector = isLast ? '└── ' : '├── ';
+      const childPrefix = isLast ? '    ' : '│   ';
+      const suspicious = node.suspicious ? ' ⚠ SUSPICIOUS' : '';
+      const color = node.suspicious ? '#ef4444' : (node.anomalous ? '#f59e0b' : '#22c55e');
+      const line = document.createElement('div');
+      line.innerHTML = `<span style="color:#444">${prefix}${connector}</span><span style="color:${color}">${node.name}</span><span style="color:#666"> ${node.args || ''}</span><span style="color:#ef4444;font-weight:bold">${suspicious}</span>`;
+      container.appendChild(line);
+      if (node.children) {
+        node.children.forEach((child, idx) => {
+          renderTree(child, prefix + childPrefix, idx === node.children.length - 1, container);
+        });
+      }
+    }
+    const root = document.getElementById('processTree');
+    const rootLine = document.createElement('div');
+    rootLine.innerHTML = `<span style="color:#22c55e">${treeData.name}</span> <span style="color:#666">${treeData.args || ''}</span>`;
+    root.appendChild(rootLine);
+    if (treeData.children) {
+      treeData.children.forEach((child, idx) => {
+        renderTree(child, '', idx === treeData.children.length - 1, root);
+      });
+    }
+    </script>
+    {% else %}
+    <p class="text-sm text-muted-foreground">Process tree data unavailable.</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<script>
+function edrTab(name) {
+  ['agents','threats','hunt','tree'].forEach(t => {
+    const el = document.getElementById('edr-' + t);
+    if (el) el.classList.add('hidden');
+    const btn = document.getElementById('etab-' + t);
+    if (btn) { btn.classList.remove('border-blue-400','text-foreground'); btn.classList.add('border-transparent','text-muted-foreground'); }
+  });
+  const panel = document.getElementById('edr-' + name);
+  if (panel) panel.classList.remove('hidden');
+  const btn = document.getElementById('etab-' + name);
+  if (btn) { btn.classList.add('border-blue-400','text-foreground'); btn.classList.remove('border-transparent','text-muted-foreground'); }
+}
+
+function isolateEndpoint(agentId) {
+  fetch(`/api/endpoint/${agentId}/isolate`, {method:'POST', headers:{'Content-Type':'application/json'}})
+  .then(r => r.json())
+  .then(data => {
+    const btn = document.getElementById('isolate-btn-' + agentId);
+    const row = document.getElementById('agent-row-' + agentId);
+    if (data.isolated) {
+      btn.textContent = 'Un-Isolate';
+      btn.className = 'text-xs px-2 py-0.5 rounded border transition-colors bg-orange-500/20 text-orange-400 border-orange-700/50';
+      row.classList.add('bg-orange-950/10');
+    } else {
+      btn.textContent = 'Isolate';
+      btn.className = 'text-xs px-2 py-0.5 rounded border transition-colors bg-green-500/20 text-green-400 border-green-700/50';
+      row.classList.remove('bg-orange-950/10');
+    }
+  });
+}
+
+$(document).ready(function() {
+  $('#agentsTable').DataTable({ order: [[7,'desc']], pageLength: 25 });
+  if (document.getElementById('threatsTable')) {
+    $('#threatsTable').DataTable({ order: [[3,'asc']], pageLength: 25 });
+  }
+});
+</script>
+{% endblock %}

@@ -84,14 +84,21 @@
             <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 text-muted-foreground hover:text-foreground">
               Security Tools ▼
             </button>
-            <div class="absolute left-0 mt-1 w-52 rounded-md shadow-lg bg-background border border-border hidden group-hover:block z-50">
+            <div class="absolute left-0 mt-1 w-60 rounded-md shadow-lg bg-background border border-border hidden group-hover:block z-50 py-1">
               <a href="{{ url_for('security_tools.network_topology') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Network Topology</a>
-              <a href="{{ url_for('security_tools.traffic_analysis') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Traffic Analysis</a>
-              <a href="{{ url_for('security_tools.exploit_verification') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Exploit Verification</a>
-              <a href="{{ url_for('security_tools.siem_logs') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">SIEM Logs</a>
-              <a href="{{ url_for('security_tools.security_config') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Security Config</a>
-              <a href="{{ url_for('security_tools.nmap_results') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Scan Results</a>
+              <a href="{{ url_for('security_tools.traffic_analysis') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Traffic Analysis (Wireshark)</a>
+              <a href="{{ url_for('security_tools.nmap_results') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Nmap Scan Results</a>
+              <a href="{{ url_for('security_tools.openvas_results') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">OpenVAS Scanner</a>
+              <a href="{{ url_for('security_tools.exploit_verification') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Exploit Verification (Metasploit)</a>
+              <a href="{{ url_for('security_tools.ids_engine') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">IDS Engine (Snort/Suricata)</a>
+              <a href="{{ url_for('security_tools.siem_logs') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">SIEM Logs (Splunk-style)</a>
+              <a href="{{ url_for('security_tools.endpoint_security') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Endpoint Security (EDR)</a>
+              <a href="{{ url_for('security_tools.firewall_rules') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Firewall Rules Engine</a>
+              <a href="{{ url_for('security_tools.vpn_monitoring') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">VPN &amp; TLS Monitor</a>
+              <a href="{{ url_for('security_tools.threat_intel') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Threat Intelligence</a>
+              <a href="{{ url_for('security_tools.incident_response') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Incident Response (DFIR)</a>
               <div class="border-t border-border my-1"></div>
+              <a href="{{ url_for('security_tools.security_config') }}" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground">Security Config</a>
               <a href="{{ url_for('security_tools.attack_scenarios') }}" class="block px-4 py-2 text-sm text-orange-400 hover:bg-accent hover:text-foreground font-medium">⚔ Attack Scenarios</a>
             </div>
           </div>

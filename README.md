@@ -11,6 +11,26 @@ Academic graduation project for MEC focused on simulated cybersecurity operation
 - REST API at `/api/v1/*` for charts and AJAX data access.
 - Role-based access control (admin, security_analyst, network_admin, viewer).
 
+## Integrated Security Tools
+
+| Tool | Route | Status | Chapter Ref |
+|------|-------|--------|------------|
+| **Nmap** (real scan) | `/scan-results/nmap` | ✅ Active | Ch. 2, 3.7.2 |
+| **OpenVAS** (GVM 22.4) | `/scan-results/openvas` | ✅ Simulated | Ch. 2 Study 4, 3.7.2 |
+| **Wireshark** (PCAP parser) | `/traffic-analysis` | ✅ Active | Ch. 3.7.2 |
+| **Metasploit Framework** | `/exploit-verification` | ✅ Simulated | Ch. 2, 3.7.2 |
+| **Kali Linux Toolkit** | `/exploit-verification` (sidebar) | ✅ Simulated | Ch. 2.4.1 |
+| **Snort / Suricata IDS** | `/ids-engine` | ✅ Simulated | Ch. 3.4.2 |
+| **Splunk SIEM** (query interface) | `/siem-logs` | ✅ Simulated | Ch. 3.7.2 |
+| **Firewall Rules Engine** (Cisco ASA-style) | `/firewall-rules` | ✅ Simulated | Ch. 3.4.2 |
+| **VPN & TLS Inspection** (IPsec/OpenVPN/WireGuard) | `/vpn-monitoring` | ✅ Simulated | Ch. 3.4.2, 3.7.2 |
+| **Threat Intelligence** (CISA KEV, OTX, AbuseIPDB, MISP, VT, Shodan) | `/threat-intel` | ✅ Simulated | Ch. 3.4 |
+| **DFIR / Incident Response** (Kanban board) | `/incident-response` | ✅ Simulated | Ch. 3.4 |
+| **Endpoint Security / EDR** (CrowdStrike-style) | `/endpoint-security` | ✅ Simulated | Ch. 3.4 (ESTHT) |
+| **GNS3 Network Simulation** | `/network-topology` (tab) | ✅ Simulated | Ch. 1.3.4 |
+| **MITRE ATT&CK Mapping** | `/mitre-attack` | ✅ Active | Ch. 3 |
+| **AI Chat Assistant** | `/ai-chat` | ✅ Active | Ch. 3 |
+
 ## Tech Stack
 - Backend: Flask + SQLAlchemy + Flask-Login + Flask-Migrate
 - Frontend: HTML/CSS/JavaScript, Chart.js, DataTables

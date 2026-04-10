@@ -1,87 +1,242 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
-  <h2 class="text-3xl font-bold tracking-tight">SIEM Log Aggregation</h2>
+<div class="flex items-center justify-between mb-4">
+  <div class="flex items-center gap-3">
+    <h2 class="text-3xl font-bold tracking-tight">Tadamun SIEM</h2>
+    <span class="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded font-bold border border-orange-500/30">Splunk-Powered</span>
+    <span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded font-medium">Simulated</span>
+  </div>
 </div>
 
-<div class="grid gap-6 md:grid-cols-3 mb-8">
-  <div class="rounded-xl border bg-card text-card-foreground shadow p-6">
-    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Total Security Events</p>
+<!-- SPL Search Bar -->
+<div class="rounded-xl border border-orange-500/30 bg-card shadow p-4 mb-4">
+  <form method="GET" action="/siem-logs" class="space-y-3">
+    <div class="flex gap-2">
+      <div class="flex-1 relative">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-orange-400 font-mono text-sm">|</span>
+        <input type="text" name="q" value="{{ search_query }}"
+          placeholder='source="Firewall" severity="critical" | stats count by source_ip'
+          class="w-full bg-black text-orange-300 font-mono text-sm pl-6 pr-4 py-2.5 rounded-md border border-orange-500/40 focus:outline-none focus:border-orange-400">
+      </div>
+      <select name="time_range" class="bg-background border border-border rounded px-3 py-2 text-sm">
+        <option value="15m" {{ 'selected' if time_range == '15m' }}>Last 15 min</option>
+        <option value="1h" {{ 'selected' if time_range == '1h' }}>Last 1 hour</option>
+        <option value="24h" {{ 'selected' if time_range == '24h' }}>Last 24 hours</option>
+        <option value="7d" {{ 'selected' if time_range == '7d' }}>Last 7 days</option>
+      </select>
+      <button type="submit" class="px-5 py-2 bg-orange-600 text-white text-sm rounded-md hover:bg-orange-700 transition-colors font-medium">Search</button>
+    </div>
+
+    <!-- Quick queries -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <span class="text-xs text-muted-foreground">Quick:</span>
+      {% set quick_queries = [
+        ('severity="critical"', 'Critical Events'),
+        ('source="IDS/IPS"', 'IDS Alerts'),
+        ('source="Firewall"', 'Firewall Logs'),
+        ('event_type="Intrusion Attempt"', 'Intrusion Attempts'),
+        ('severity="high" AND source="Endpoint"', 'High Endpoint'),
+      ] %}
+      {% for q_str, q_label in quick_queries %}
+      <a href="/siem-logs?q={{ q_str | urlencode }}&time_range={{ time_range }}"
+        class="text-xs px-2.5 py-1 rounded border {% if search_query == q_str %}bg-orange-500/20 text-orange-400 border-orange-500/40{% else %}text-muted-foreground hover:bg-accent border-border{% endif %} transition-colors font-mono">
+        {{ q_str }}
+      </a>
+      {% endfor %}
+    </div>
+  </form>
+</div>
+
+<!-- Stats row -->
+<div class="grid gap-4 md:grid-cols-3 mb-6">
+  <div class="rounded-xl border bg-card shadow p-5">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Events in Range</p>
     <p class="text-3xl font-bold">{{ stats.total }}</p>
   </div>
-  <div class="rounded-xl border bg-card text-card-foreground shadow p-6">
-    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Critical Events (24h)</p>
-    <p class="text-3xl font-bold text-destructive">{{ stats.critical }}</p>
+  <div class="rounded-xl border border-red-900/50 bg-red-950/20 shadow p-5">
+    <p class="text-xs text-red-400 uppercase font-bold mb-1">Critical</p>
+    <p class="text-3xl font-bold text-red-400">{{ stats.critical }}</p>
   </div>
-  <div class="rounded-xl border bg-card text-card-foreground shadow p-6">
-    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Active Threats</p>
-    <p class="text-3xl font-bold text-accent">{{ stats.high }}</p>
+  <div class="rounded-xl border border-orange-900/50 bg-orange-950/20 shadow p-5">
+    <p class="text-xs text-orange-400 uppercase font-bold mb-1">High Severity</p>
+    <p class="text-3xl font-bold text-orange-400">{{ stats.high }}</p>
   </div>
 </div>
 
-<div class="rounded-xl border bg-card shadow overflow-hidden">
-  <div class="p-6 border-b flex items-center justify-between">
-    <h3 class="font-semibold">Security Event Feed</h3>
-    <div class="flex gap-2">
-        <select class="text-xs bg-background border rounded px-2 py-1">
-            <option>All Sources</option>
-            <option>Firewall</option>
-            <option>IDS/IPS</option>
-            <option>Endpoint</option>
-        </select>
-        <button class="text-xs px-3 py-1 bg-accent text-accent-foreground rounded">Refresh</button>
+<!-- Tabs -->
+<div class="mb-4 border-b border-border">
+  <div class="flex gap-0">
+    <button onclick="siemTab('events')" id="stab-events" class="stab-btn px-5 py-2.5 text-sm font-medium border-b-2 border-orange-400 text-foreground">Events ({{ events | length }})</button>
+    <button onclick="siemTab('viz')" id="stab-viz" class="stab-btn px-5 py-2.5 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground">Visualization</button>
+  </div>
+</div>
+
+<!-- Events tab -->
+<div id="siem-events" class="grid gap-6 lg:grid-cols-4">
+  <!-- Field sidebar -->
+  <div class="space-y-4">
+    <div class="rounded-xl border bg-card shadow p-4">
+      <h4 class="text-xs font-bold text-muted-foreground uppercase mb-3">source</h4>
+      {% for src, count in source_counts.items() %}
+      <a href="/siem-logs?q=source%3D%22{{ src }}&time_range={{ time_range }}" class="flex justify-between text-xs py-1 hover:text-orange-400 transition-colors">
+        <span class="text-foreground truncate">{{ src }}</span>
+        <span class="text-muted-foreground ml-2 flex-shrink-0">{{ count }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    <div class="rounded-xl border bg-card shadow p-4">
+      <h4 class="text-xs font-bold text-muted-foreground uppercase mb-3">severity</h4>
+      {% for sev, count in severity_counts.items() %}
+      <a href="/siem-logs?q=severity%3D%22{{ sev }}&time_range={{ time_range }}" class="flex justify-between text-xs py-1 hover:text-orange-400 transition-colors">
+        <span class="{% if sev == 'critical' %}text-red-400{% elif sev == 'high' %}text-orange-400{% elif sev == 'medium' %}text-yellow-400{% else %}text-muted-foreground{% endif %}">{{ sev }}</span>
+        <span class="text-muted-foreground ml-2">{{ count }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    <div class="rounded-xl border bg-card shadow p-4">
+      <h4 class="text-xs font-bold text-muted-foreground uppercase mb-3">event_type</h4>
+      {% for t, count in type_counts.items() %}
+      <a href="/siem-logs?q=event_type%3D%22{{ t }}&time_range={{ time_range }}" class="flex justify-between text-xs py-1 hover:text-orange-400 transition-colors">
+        <span class="text-foreground truncate">{{ t }}</span>
+        <span class="text-muted-foreground ml-2 flex-shrink-0">{{ count }}</span>
+      </a>
+      {% endfor %}
     </div>
   </div>
-  <div class="p-0">
-    <table id="siemTable" class="w-full text-xs">
-      <thead>
-        <tr class="bg-muted/50 border-b">
-          <th class="text-left py-3 px-4">Timestamp</th>
-          <th class="text-left py-3 px-4">Severity</th>
-          <th class="text-left py-3 px-4">Source</th>
-          <th class="text-left py-3 px-4">Event Type</th>
-          <th class="text-left py-3 px-4">Source IP</th>
-          <th class="text-left py-3 px-4">Message</th>
-          <th class="text-left py-3 px-4">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for event in events %}
-        <tr class="border-b hover:bg-muted/20 transition-colors">
-          <td class="py-3 px-4 font-mono text-muted-foreground">{{ event.timestamp.strftime('%H:%M:%S.%f')[:-3] }}</td>
-          <td class="py-3 px-4">
-            {% set s_class = 'text-destructive' if event.severity == 'critical' else 'text-accent' if event.severity == 'high' else 'text-muted-foreground' %}
-            <span class="font-bold uppercase {{ s_class }}">{{ event.severity }}</span>
-          </td>
-          <td class="py-3 px-4 font-bold">{{ event.source }}</td>
-          <td class="py-3 px-4">{{ event.event_type }}</td>
-          <td class="py-3 px-4 font-mono">{{ event.source_ip }}</td>
-          <td class="py-3 px-4 max-w-xs truncate">{{ event.message }}</td>
-          <td class="py-3 px-4">
-              <button onclick="alert(`Raw Log:\n{{ event.raw_log }}`)" class="text-accent hover:underline">Details</button>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+
+  <!-- Results panel -->
+  <div class="lg:col-span-3">
+    <div class="rounded-xl border bg-card shadow overflow-hidden">
+      <div class="p-4 border-b flex items-center justify-between">
+        <h3 class="font-semibold text-sm">Security Event Feed</h3>
+        <span class="text-xs text-muted-foreground font-mono">{{ events | length }} results {% if search_query %}for: {{ search_query }}{% endif %}</span>
+      </div>
+      <table id="siemTable" class="w-full text-xs">
+        <thead>
+          <tr class="bg-muted/50 border-b">
+            <th class="text-left py-3 px-3">Timestamp</th>
+            <th class="text-left py-3 px-3">Sev</th>
+            <th class="text-left py-3 px-3">Source</th>
+            <th class="text-left py-3 px-3">Event Type</th>
+            <th class="text-left py-3 px-3">Source IP</th>
+            <th class="text-left py-3 px-3">Message</th>
+            <th class="text-left py-3 px-3">Raw</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in events %}
+          <tr class="border-b hover:bg-muted/20 transition-colors cursor-pointer" onclick="expandRow(this, {{ loop.index0 }})">
+            <td class="py-2 px-3 font-mono text-muted-foreground whitespace-nowrap">{{ event.timestamp.strftime('%m/%d %H:%M:%S') }}</td>
+            <td class="py-2 px-3">
+              {% set s_class = 'text-red-400' if event.severity == 'critical' else 'text-orange-400' if event.severity == 'high' else 'text-yellow-400' if event.severity == 'medium' else 'text-muted-foreground' %}
+              <span class="font-bold uppercase {{ s_class }}">{{ event.severity[:4] }}</span>
+            </td>
+            <td class="py-2 px-3 font-bold whitespace-nowrap">{{ event.source }}</td>
+            <td class="py-2 px-3 whitespace-nowrap">{{ event.event_type }}</td>
+            <td class="py-2 px-3 font-mono">{{ event.source_ip }}</td>
+            <td class="py-2 px-3 max-w-xs truncate">{{ event.message }}</td>
+            <td class="py-2 px-3">
+              <button onclick="event.stopPropagation();showRaw('{{ event.raw_log | replace("'","\'") }}')" class="text-orange-400 hover:underline text-xs">Raw</button>
+            </td>
+          </tr>
+          <tr class="expand-row hidden border-b bg-muted/10" id="expand-{{ loop.index0 }}">
+            <td colspan="7" class="py-2 px-3">
+              <pre class="font-mono text-xs text-muted-foreground">{{ event.raw_log }}</pre>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-<div class="mt-8 rounded-xl border bg-black text-green-500 shadow p-6 font-mono text-xs overflow-y-auto max-h-[300px]">
-    <p class="mb-2 border-b border-green-900 pb-1 text-green-700"># LIVE IDS DETECTION LOGS</p>
-    {% for event in events[:20] %}
-    {% if event.source == 'IDS/IPS' %}
-    <p class="mb-1">[{{ event.timestamp.strftime('%m/%d-%H:%M:%S') }}] [**] [1:2024917:2] {{ event.message }} [**] src: {{ event.source_ip }} -> dst: {{ event.dest_ip }}</p>
-    {% endif %}
-    {% endfor %}
+<!-- Visualization tab -->
+<div id="siem-viz" class="hidden">
+  <div class="rounded-xl border bg-card shadow p-6">
+    <h3 class="font-semibold mb-4">Events Over Time (Last 24h — Hourly)</h3>
+    <canvas id="siemChart" height="80"></canvas>
+  </div>
+</div>
+
+<!-- Raw log modal -->
+<div id="rawModal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center">
+  <div class="bg-card border border-border rounded-xl shadow-2xl w-full max-w-2xl mx-4">
+    <div class="p-4 border-b flex justify-between items-center">
+      <h4 class="font-semibold text-sm">Raw Log</h4>
+      <button onclick="document.getElementById('rawModal').classList.add('hidden');document.getElementById('rawModal').classList.remove('flex')" class="text-muted-foreground hover:text-foreground">✕</button>
+    </div>
+    <pre id="rawLogContent" class="p-4 bg-black text-green-400 font-mono text-xs overflow-x-auto max-h-64 whitespace-pre-wrap rounded-b-xl"></pre>
+  </div>
 </div>
 
 <script>
-  $(document).ready(function() {
-    $('#siemTable').DataTable({
-        "order": [[0, "desc"]],
-        "pageLength": 25
-    });
+const chartLabels = {{ chart_labels | tojson }};
+const chartValues = {{ chart_values | tojson }};
+
+function siemTab(name) {
+  document.getElementById('siem-events').classList.toggle('hidden', name !== 'events');
+  document.getElementById('siem-viz').classList.toggle('hidden', name !== 'viz');
+  document.querySelectorAll('.stab-btn').forEach(b => {
+    b.classList.remove('border-orange-400', 'text-foreground');
+    b.classList.add('border-transparent', 'text-muted-foreground');
   });
+  const btn = document.getElementById('stab-' + name);
+  btn.classList.add('border-orange-400', 'text-foreground');
+  btn.classList.remove('border-transparent', 'text-muted-foreground');
+  if (name === 'viz') renderChart();
+}
+
+let chartRendered = false;
+function renderChart() {
+  if (chartRendered) return;
+  chartRendered = true;
+  const ctx = document.getElementById('siemChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: chartLabels,
+      datasets: [{
+        label: 'Events',
+        data: chartValues,
+        borderColor: 'rgb(249, 115, 22)',
+        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+        fill: true,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#888' } } },
+      scales: {
+        x: { ticks: { color: '#888', maxTicksLimit: 12 }, grid: { color: '#333' } },
+        y: { ticks: { color: '#888' }, grid: { color: '#333' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+function expandRow(row, idx) {
+  const expRow = document.getElementById('expand-' + idx);
+  expRow.classList.toggle('hidden');
+}
+
+function showRaw(rawLog) {
+  document.getElementById('rawLogContent').textContent = rawLog;
+  document.getElementById('rawModal').classList.remove('hidden');
+  document.getElementById('rawModal').classList.add('flex');
+}
+
+document.getElementById('rawModal').addEventListener('click', function(e) {
+  if (e.target === this) { this.classList.add('hidden'); this.classList.remove('flex'); }
+});
+
+$(document).ready(function() {
+  $('#siemTable').DataTable({
+    order: [[0, 'desc']],
+    pageLength: 25,
+    columnDefs: [{orderable: false, targets: [6]}]
+  });
+});
 </script>
 {% endblock %}

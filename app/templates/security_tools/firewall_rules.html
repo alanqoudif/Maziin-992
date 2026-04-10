@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center gap-3">
+    <h2 class="text-3xl font-bold tracking-tight">Firewall Rules Engine</h2>
+    <span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded font-medium">Simulated</span>
+    <span class="text-xs bg-orange-600/20 text-orange-400 px-2 py-0.5 rounded font-medium">Cisco ASA-style</span>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="grid gap-4 md:grid-cols-4 mb-8">
+  <div class="rounded-xl border bg-card shadow p-5">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Total Rules</p>
+    <p class="text-3xl font-bold">{{ rules | length }}</p>
+  </div>
+  <div class="rounded-xl border border-green-900/50 bg-green-950/20 shadow p-5">
+    <p class="text-xs text-green-400 uppercase font-bold mb-1">PERMIT Rules</p>
+    <p class="text-3xl font-bold text-green-400">{{ permit_count }}</p>
+  </div>
+  <div class="rounded-xl border border-red-900/50 bg-red-950/20 shadow p-5">
+    <p class="text-xs text-red-400 uppercase font-bold mb-1">DENY Rules</p>
+    <p class="text-3xl font-bold text-red-400">{{ deny_count }}</p>
+  </div>
+  <div class="rounded-xl border bg-card shadow p-5">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Total Hits (24h)</p>
+    <p class="text-3xl font-bold">{{ "{:,}".format(total_hits) }}</p>
+  </div>
+</div>
+
+<!-- Packet Simulator -->
+<div class="rounded-xl border bg-card shadow p-6 mb-6">
+  <h3 class="font-semibold mb-4 flex items-center gap-2">
+    Rule Simulator
+    <span class="text-xs text-muted-foreground font-normal">— Test how a packet traverses the rule list</span>
+  </h3>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+    <div>
+      <label class="block text-xs text-muted-foreground mb-1">Source IP</label>
+      <input id="sim-src" type="text" placeholder="e.g. 192.168.20.10" class="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono">
+    </div>
+    <div>
+      <label class="block text-xs text-muted-foreground mb-1">Destination IP</label>
+      <input id="sim-dst" type="text" placeholder="e.g. 192.168.40.25" class="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono">
+    </div>
+    <div>
+      <label class="block text-xs text-muted-foreground mb-1">Port</label>
+      <input id="sim-port" type="text" placeholder="e.g. 3306" class="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono">
+    </div>
+    <div>
+      <label class="block text-xs text-muted-foreground mb-1">Protocol</label>
+      <select id="sim-proto" class="w-full bg-background border border-border rounded px-3 py-2 text-sm">
+        <option>tcp</option><option>udp</option><option>icmp</option><option>any</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Quick scenario buttons -->
+  <div class="flex flex-wrap gap-2 mb-4">
+    <span class="text-xs text-muted-foreground self-center">Quick tests:</span>
+    <button onclick="setScenario('192.168.50.10','192.168.20.100','any','tcp')" class="text-xs px-2.5 py-1 border rounded hover:bg-accent transition-colors">IoT → Finance</button>
+    <button onclick="setScenario('192.168.10.5','192.168.40.5','22','tcp')" class="text-xs px-2.5 py-1 border rounded hover:bg-accent transition-colors">IT → DC SSH</button>
+    <button onclick="setScenario('203.0.113.45','192.168.40.25','3306','tcp')" class="text-xs px-2.5 py-1 border rounded hover:bg-accent transition-colors">External → MySQL</button>
+    <button onclick="setScenario('10.8.0.2','192.168.40.10','443','tcp')" class="text-xs px-2.5 py-1 border rounded hover:bg-accent transition-colors">VPN Client → DC</button>
+    <button onclick="setScenario('0.0.0.0','192.168.10.20','443','tcp')" class="text-xs px-2.5 py-1 border rounded hover:bg-accent transition-colors">External → Portal</button>
+  </div>
+
+  <button onclick="simulatePacket()" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">Simulate Packet</button>
+
+  <div id="sim-result" class="mt-4 hidden rounded-lg p-4 border"></div>
+</div>
+
+<!-- Rules table -->
+<div class="rounded-xl border bg-card shadow overflow-hidden">
+  <div class="p-4 border-b flex items-center justify-between">
+    <h3 class="font-semibold text-sm">Access Control List (Ordered by Priority)</h3>
+    <span class="text-xs text-muted-foreground">Rules evaluated top-to-bottom — first match wins</span>
+  </div>
+  <div class="p-4">
+    <table id="fwTable" class="w-full text-xs">
+      <thead>
+        <tr class="border-b">
+          <th class="text-left py-3 px-2">Pri</th>
+          <th class="text-left py-3 px-2">Rule ID</th>
+          <th class="text-left py-3 px-2">Action</th>
+          <th class="text-left py-3 px-2">Protocol</th>
+          <th class="text-left py-3 px-2">Source</th>
+          <th class="text-left py-3 px-2">Destination</th>
+          <th class="text-left py-3 px-2">Port</th>
+          <th class="text-left py-3 px-2">Hits</th>
+          <th class="text-left py-3 px-2">State</th>
+          <th class="text-left py-3 px-2">Description</th>
+          <th class="text-left py-3 px-2">Test</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rule in rules | sort(attribute='priority') %}
+        <tr class="border-b hover:bg-muted/20 transition-colors" id="rule-row-{{ rule.id }}">
+          <td class="py-2 px-2 text-muted-foreground">{{ rule.priority if rule.priority < 9999 else '∞' }}</td>
+          <td class="py-2 px-2 font-mono font-bold">{{ rule.id }}</td>
+          <td class="py-2 px-2">
+            {% if rule.action == 'PERMIT' %}
+            <span class="font-bold text-green-400">PERMIT</span>
+            {% else %}
+            <span class="font-bold text-red-400">DENY</span>
+            {% endif %}
+          </td>
+          <td class="py-2 px-2 font-mono uppercase">{{ rule.protocol }}</td>
+          <td class="py-2 px-2 font-mono text-xs">{{ rule.src_ip }}</td>
+          <td class="py-2 px-2 font-mono text-xs">{{ rule.dst_ip }}</td>
+          <td class="py-2 px-2 font-mono">{{ rule.dst_port }}</td>
+          <td class="py-2 px-2 text-muted-foreground">{{ "{:,}".format(rule.hit_count) }}</td>
+          <td class="py-2 px-2">
+            <button onclick="toggleRule('{{ rule.id }}')" id="toggle-{{ rule.id }}"
+              class="text-xs px-2 py-0.5 rounded font-medium {{ 'bg-green-500/20 text-green-400' if rule.enabled else 'bg-muted text-muted-foreground' }}">
+              {{ 'Enabled' if rule.enabled else 'Disabled' }}
+            </button>
+          </td>
+          <td class="py-2 px-2 max-w-[200px] text-muted-foreground">{{ rule.description }}</td>
+          <td class="py-2 px-2">
+            <button onclick="testRule('{{ rule.id }}','{{ rule.src_ip }}','{{ rule.dst_ip }}','{{ rule.dst_port }}','{{ rule.protocol }}')"
+              class="text-xs text-blue-400 hover:underline whitespace-nowrap">
+              Test ▶
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Test result modal -->
+<div id="testModal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center">
+  <div class="bg-card border border-border rounded-xl shadow-2xl w-full max-w-lg mx-4">
+    <div class="p-5 border-b flex justify-between items-center">
+      <h4 class="font-semibold">Rule Evaluation Result</h4>
+      <button onclick="closeTestModal()" class="text-muted-foreground hover:text-foreground">✕</button>
+    </div>
+    <div class="p-5" id="testModalBody"></div>
+  </div>
+</div>
+
+<script>
+function simulatePacket() {
+  const src = document.getElementById('sim-src').value || 'any';
+  const dst = document.getElementById('sim-dst').value || 'any';
+  const port = document.getElementById('sim-port').value || 'any';
+  const proto = document.getElementById('sim-proto').value;
+
+  fetch('/api/firewall/test', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({src_ip: src, dst_ip: dst, port: port, protocol: proto})
+  })
+  .then(r => r.json())
+  .then(data => {
+    const el = document.getElementById('sim-result');
+    el.classList.remove('hidden');
+    const isPermit = data.action === 'PERMIT';
+    el.className = `mt-4 rounded-lg p-4 border ${isPermit ? 'bg-green-950/30 border-green-900/50' : 'bg-red-950/30 border-red-900/50'}`;
+    el.innerHTML = `
+      <div class="flex items-center gap-3 mb-3">
+        <span class="text-2xl font-bold ${isPermit ? 'text-green-400' : 'text-red-400'}">${data.action}</span>
+        <span class="text-sm text-muted-foreground">Matched rule: <span class="font-mono font-bold text-foreground">${data.matched_rule}</span></span>
+        ${data.priority ? `<span class="text-xs text-muted-foreground">Priority: ${data.priority}</span>` : ''}
+      </div>
+      <p class="text-sm">${data.description}</p>
+      <div class="mt-3 text-xs text-muted-foreground font-mono bg-black/30 rounded p-2">
+        Packet: ${src} → ${dst}:${port} (${proto.toUpperCase()})
+      </div>
+    `;
+    if (data.matched_rule && data.matched_rule !== 'IMPLICIT-DENY') {
+      document.querySelectorAll('tr[id^="rule-row-"]').forEach(r => r.style.backgroundColor = '');
+      const row = document.getElementById('rule-row-' + data.matched_rule);
+      if (row) row.style.backgroundColor = isPermit ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)';
+    }
+  })
+  .catch(err => console.error(err));
+}
+
+function setScenario(src, dst, port, proto) {
+  document.getElementById('sim-src').value = src;
+  document.getElementById('sim-dst').value = dst;
+  document.getElementById('sim-port').value = port;
+  document.getElementById('sim-proto').value = proto;
+}
+
+function toggleRule(ruleId) {
+  const btn = document.getElementById('toggle-' + ruleId);
+  const isEnabled = btn.textContent.trim() === 'Enabled';
+  btn.textContent = isEnabled ? 'Disabled' : 'Enabled';
+  btn.className = `text-xs px-2 py-0.5 rounded font-medium ${!isEnabled ? 'bg-green-500/20 text-green-400' : 'bg-muted text-muted-foreground'}`;
+}
+
+function testRule(ruleId, srcIp, dstIp, port, proto) {
+  const testSrc = srcIp === 'any' ? '1.2.3.4' : (srcIp.includes('/') ? srcIp.split('/')[0].replace(/\d+$/, '1') : srcIp);
+  const testDst = dstIp === 'any' ? '192.168.10.1' : (dstIp.includes('/') ? dstIp.split('/')[0].replace(/\d+$/, '1') : dstIp);
+  const testPort = port === 'any' ? '80' : port.split(',')[0];
+  const testProto = proto === 'any' ? 'tcp' : proto;
+
+  fetch('/api/firewall/test', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({src_ip: testSrc, dst_ip: testDst, port: testPort, protocol: testProto})
+  })
+  .then(r => r.json())
+  .then(data => {
+    const modal = document.getElementById('testModal');
+    const isPermit = data.action === 'PERMIT';
+    document.getElementById('testModalBody').innerHTML = `
+      <div class="text-center mb-4">
+        <span class="text-4xl font-bold ${isPermit ? 'text-green-400' : 'text-red-400'}">${data.action}</span>
+      </div>
+      <div class="space-y-2 text-sm">
+        <div class="flex justify-between"><span class="text-muted-foreground">Matched Rule</span><span class="font-mono font-bold">${data.matched_rule}</span></div>
+        <div class="flex justify-between"><span class="text-muted-foreground">Priority</span><span>${data.priority || 'N/A'}</span></div>
+        <div class="mt-3 p-3 bg-black/30 rounded text-xs font-mono text-muted-foreground">${data.description}</div>
+        <div class="mt-2 p-2 bg-muted/30 rounded text-xs font-mono">Test Packet: ${testSrc} → ${testDst}:${testPort} (${testProto.toUpperCase()})</div>
+      </div>
+    `;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  });
+}
+
+function closeTestModal() {
+  document.getElementById('testModal').classList.add('hidden');
+  document.getElementById('testModal').classList.remove('flex');
+}
+
+document.getElementById('testModal').addEventListener('click', function(e) {
+  if (e.target === this) closeTestModal();
+});
+
+$(document).ready(function() {
+  $('#fwTable').DataTable({
+    order: [[0, 'asc']],
+    pageLength: 25,
+    columnDefs: [{orderable: false, targets: [8, 10]}]
+  });
+});
+</script>
+{% endblock %}

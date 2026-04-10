@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div class="flex items-center gap-3">
+    <h2 class="text-3xl font-bold tracking-tight">IDS/IPS Engine</h2>
+    <span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded font-medium">Simulated</span>
+  </div>
+  <!-- Engine selector -->
+  <div class="flex items-center gap-2">
+    <span class="text-xs text-muted-foreground">Engine:</span>
+    <a href="?engine=snort" class="px-3 py-1.5 text-xs rounded-md border font-medium transition-colors {{ 'bg-orange-600 text-white border-orange-600' if active_engine == 'snort' else 'hover:bg-accent text-muted-foreground' }}">
+      Snort 3.1.82
+    </a>
+    <a href="?engine=suricata" class="px-3 py-1.5 text-xs rounded-md border font-medium transition-colors {{ 'bg-teal-600 text-white border-teal-600' if active_engine == 'suricata' else 'hover:bg-accent text-muted-foreground' }}">
+      Suricata 7.0.3
+    </a>
+  </div>
+</div>
+
+<!-- Stats row -->
+<div class="grid gap-4 md:grid-cols-4 mb-8">
+  <div class="rounded-xl border bg-card shadow p-5">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Active Rules</p>
+    <p class="text-3xl font-bold">{{ rule_stats.total_rules }}</p>
+    <p class="text-xs text-muted-foreground mt-1">{{ rule_stats.ruleset }}</p>
+  </div>
+  <div class="rounded-xl border border-red-900/50 bg-red-950/20 shadow p-5">
+    <p class="text-xs text-red-400 uppercase font-bold mb-1">Alerts Today</p>
+    <p class="text-3xl font-bold text-red-400">{{ alerts_today }}</p>
+    <p class="text-xs text-muted-foreground mt-1">IDS/IPS triggered events</p>
+  </div>
+  <div class="rounded-xl border bg-card shadow p-5">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Top Category</p>
+    <p class="text-xl font-bold">{% set top = rule_stats.categories.items() | list | sort(attribute=1, reverse=True) | first %}{{ top[0] }}</p>
+    <p class="text-xs text-muted-foreground mt-1">{{ top[1] }} rules</p>
+  </div>
+  <div class="rounded-xl border bg-card shadow p-5">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Engine Version</p>
+    <p class="text-xl font-bold">{{ rule_stats.engine_snort if active_engine == 'snort' else rule_stats.engine_suricata }}</p>
+    <p class="text-xs text-muted-foreground mt-1">Last updated: {{ rule_stats.last_updated[:10] }}</p>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="mb-4 border-b border-border">
+  <div class="flex gap-0" id="idsTabs">
+    <button onclick="showTab('rules')" id="tab-rules" class="tab-btn px-5 py-2.5 text-sm font-medium border-b-2 border-transparent hover:text-foreground transition-colors">Active Rules</button>
+    <button onclick="showTab('alerts')" id="tab-alerts" class="tab-btn px-5 py-2.5 text-sm font-medium border-b-2 border-transparent hover:text-foreground transition-colors">Alerts ({{ ids_events | length }})</button>
+    <button onclick="showTab('editor')" id="tab-editor" class="tab-btn px-5 py-2.5 text-sm font-medium border-b-2 border-transparent hover:text-foreground transition-colors">Rule Editor</button>
+  </div>
+</div>
+
+<!-- Rules Tab -->
+<div id="panel-rules" class="tab-panel">
+  <!-- Category filter pills -->
+  <div class="flex flex-wrap gap-2 mb-4">
+    <button onclick="filterRules('all')" class="cat-filter active-filter text-xs px-3 py-1 rounded-full border bg-accent text-foreground" data-cat="all">All ({{ rules | length }})</button>
+    {% for cat in rule_categories %}
+    <button onclick="filterRules('{{ cat }}')" class="cat-filter text-xs px-3 py-1 rounded-full border text-muted-foreground hover:bg-accent" data-cat="{{ cat }}">{{ cat }} ({{ rule_stats.categories[cat] }})</button>
+    {% endfor %}
+  </div>
+
+  <div class="rounded-xl border bg-card shadow overflow-hidden">
+    <table id="rulesTable" class="w-full text-xs">
+      <thead>
+        <tr class="bg-muted/50 border-b">
+          <th class="text-left py-3 px-3">SID</th>
+          <th class="text-left py-3 px-3">Category</th>
+          <th class="text-left py-3 px-3">Severity</th>
+          <th class="text-left py-3 px-3">Protocol</th>
+          <th class="text-left py-3 px-3">Description</th>
+          <th class="text-left py-3 px-3">Action</th>
+          <th class="text-left py-3 px-3">Rule</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rule in rules %}
+        <tr class="border-b hover:bg-muted/20 rule-row" data-cat="{{ rule.category }}">
+          <td class="py-2 px-3 font-mono">{{ rule.sid }}</td>
+          <td class="py-2 px-3">
+            <span class="inline-block text-xs px-2 py-0.5 rounded font-bold
+              {% if rule.category == 'EXPLOIT' %}bg-red-500/20 text-red-400
+              {% elif rule.category == 'MALWARE' %}bg-orange-500/20 text-orange-400
+              {% elif rule.category == 'TROJAN' %}bg-purple-500/20 text-purple-400
+              {% elif rule.category == 'DOS' %}bg-yellow-500/20 text-yellow-400
+              {% elif rule.category == 'WEB-ATTACKS' %}bg-blue-500/20 text-blue-400
+              {% elif rule.category == 'SCAN' %}bg-teal-500/20 text-teal-400
+              {% else %}bg-muted text-muted-foreground{% endif %}">
+              {{ rule.category }}
+            </span>
+          </td>
+          <td class="py-2 px-3">
+            <span class="font-bold text-xs
+              {% if rule.severity == 'critical' %}text-red-400
+              {% elif rule.severity == 'high' %}text-orange-400
+              {% elif rule.severity == 'medium' %}text-yellow-400
+              {% else %}text-blue-400{% endif %}">
+              {{ rule.severity | upper }}
+            </span>
+          </td>
+          <td class="py-2 px-3 font-mono text-muted-foreground">{{ rule.protocol }}</td>
+          <td class="py-2 px-3 max-w-xs">{{ rule.description }}</td>
+          <td class="py-2 px-3">
+            <span class="text-xs font-bold text-red-400">{{ rule.action | upper }}</span>
+          </td>
+          <td class="py-2 px-3">
+            <button onclick="showRule({{ loop.index0 }})" class="text-xs text-blue-400 hover:underline">View Rule</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Alerts Tab -->
+<div id="panel-alerts" class="tab-panel hidden">
+  <div class="rounded-xl border bg-black text-green-400 font-mono text-xs mb-4 p-4 max-h-48 overflow-y-auto">
+    <p class="text-green-700 mb-2">[{{ rule_stats.engine_snort if active_engine == 'snort' else rule_stats.engine_suricata }}] — LIVE ALERT OUTPUT</p>
+    {% for e in ids_events[:30] %}
+    <p class="mb-0.5">[{{ e.timestamp.strftime('%m/%d-%H:%M:%S.%f')[:-3] }}] [**] [1:200001:3] {{ e.message }} [**] [Classification: {{ e.event_type }}] [Priority: {% if e.severity == 'critical' %}1{% elif e.severity == 'high' %}2{% else %}3{% endif %}] {TCP} {{ e.source_ip }}:{{ range(1024,65535) | random }} -> {{ e.dest_ip }}:{{ [80, 443, 22, 445, 3389] | random }}</p>
+    {% endfor %}
+  </div>
+
+  <div class="rounded-xl border bg-card shadow overflow-hidden">
+    <div class="p-4 border-b flex items-center justify-between">
+      <h3 class="font-semibold text-sm">IDS Alert Feed</h3>
+      <span class="text-xs text-muted-foreground">{{ ids_events | length }} events (IDS/IPS source)</span>
+    </div>
+    <table id="alertsTable" class="w-full text-xs">
+      <thead>
+        <tr class="bg-muted/50 border-b">
+          <th class="text-left py-3 px-3">Timestamp</th>
+          <th class="text-left py-3 px-3">Severity</th>
+          <th class="text-left py-3 px-3">Event Type</th>
+          <th class="text-left py-3 px-3">Source IP</th>
+          <th class="text-left py-3 px-3">Dest IP</th>
+          <th class="text-left py-3 px-3">Message</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in ids_events %}
+        <tr class="border-b hover:bg-muted/20">
+          <td class="py-2 px-3 font-mono text-muted-foreground">{{ e.timestamp.strftime('%m/%d %H:%M:%S') }}</td>
+          <td class="py-2 px-3">
+            <span class="font-bold {% if e.severity == 'critical' %}text-red-400{% elif e.severity == 'high' %}text-orange-400{% elif e.severity == 'medium' %}text-yellow-400{% else %}text-muted-foreground{% endif %}">{{ e.severity | upper }}</span>
+          </td>
+          <td class="py-2 px-3">{{ e.event_type }}</td>
+          <td class="py-2 px-3 font-mono">{{ e.source_ip }}</td>
+          <td class="py-2 px-3 font-mono">{{ e.dest_ip }}</td>
+          <td class="py-2 px-3">{{ e.message }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Rule Editor Tab -->
+<div id="panel-editor" class="tab-panel hidden">
+  <div class="rounded-xl border bg-card shadow p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold">Rule Editor (Read-Only Preview)</h3>
+      <span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">Read-Only in Demo Mode</span>
+    </div>
+    <p class="text-sm text-muted-foreground mb-4">Snort/Suricata rule syntax reference. In production, rules would be deployed to the engine via ruleset management (PulledPork / Suricata-Update).</p>
+    <textarea id="ruleEditor" class="w-full h-96 bg-black text-green-400 font-mono text-xs p-4 rounded-lg border border-border resize-none" readonly># Snort 3 / Suricata 7 Rule Syntax
+# Format: action proto src_ip src_port direction dst_ip dst_port (options)
+#
+# Example — add this rule to detect Log4Shell:
+alert tcp $EXTERNAL_NET any -> $HTTP_SERVERS $HTTP_PORTS (
+    msg:"ET EXPLOIT Apache Log4j RCE CVE-2021-44228 JNDI Injection";
+    flow:established,to_server;
+    content:"${jndi:"; nocase;
+    classtype:attempted-admin;
+    sid:2022001;
+    rev:5;
+)
+
+# Example — detect Cobalt Strike beacon:
+alert http $HOME_NET any -> $EXTERNAL_NET any (
+    msg:"ET TROJAN Cobalt Strike Default Beacon";
+    flow:established,to_server;
+    http.uri; content:"/jquery-3.3.1.min.js";
+    classtype:trojan-activity;
+    sid:2016924;
+    rev:4;
+)
+
+# To load this rule in Suricata:
+#   suricata-update add-source tadamun /etc/suricata/rules/tadamun.rules
+#   systemctl restart suricata
+#
+# To load in Snort 3:
+#   snort -c /etc/snort/snort.lua --lua "include '/etc/snort/rules/tadamun.rules'"
+    </textarea>
+    <div class="mt-4 flex gap-2">
+      <button onclick="loadRuleInEditor()" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">Load Selected Rule</button>
+      <button class="px-4 py-2 text-sm border rounded-md hover:bg-accent transition-colors text-muted-foreground" disabled>Validate Syntax</button>
+      <button class="px-4 py-2 text-sm border rounded-md hover:bg-accent transition-colors text-muted-foreground" disabled>Deploy to Engine</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rule detail modal -->
+<div id="ruleModal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center">
+  <div class="bg-card border border-border rounded-xl shadow-2xl w-full max-w-3xl mx-4 max-h-[80vh] overflow-y-auto">
+    <div class="p-5 border-b flex justify-between items-center">
+      <h4 class="font-semibold text-sm" id="ruleModalTitle">Rule Detail</h4>
+      <button onclick="closeRuleModal()" class="text-muted-foreground hover:text-foreground">✕</button>
+    </div>
+    <div class="p-5" id="ruleModalBody"></div>
+  </div>
+</div>
+
+<script>
+const rules = {{ rules | tojson }};
+
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+  document.getElementById('panel-' + name).classList.remove('hidden');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('border-blue-400', 'text-foreground');
+    b.classList.add('border-transparent', 'text-muted-foreground');
+  });
+  const btn = document.getElementById('tab-' + name);
+  btn.classList.add('border-blue-400', 'text-foreground');
+  btn.classList.remove('border-transparent', 'text-muted-foreground');
+}
+
+function filterRules(cat) {
+  document.querySelectorAll('.rule-row').forEach(row => {
+    row.style.display = (cat === 'all' || row.dataset.cat === cat) ? '' : 'none';
+  });
+  document.querySelectorAll('.cat-filter').forEach(b => {
+    b.classList.toggle('bg-accent', b.dataset.cat === cat);
+    b.classList.toggle('text-foreground', b.dataset.cat === cat);
+  });
+}
+
+function showRule(idx) {
+  const r = rules[idx];
+  document.getElementById('ruleModalTitle').textContent = r.description;
+  document.getElementById('ruleModalBody').innerHTML = `
+    <div class="grid grid-cols-2 gap-3 text-sm mb-4">
+      <div><span class="text-muted-foreground text-xs">SID</span><p class="font-mono mt-0.5">${r.sid}</p></div>
+      <div><span class="text-muted-foreground text-xs">Category</span><p class="font-bold mt-0.5">${r.category}</p></div>
+      <div><span class="text-muted-foreground text-xs">Protocol</span><p class="font-mono mt-0.5">${r.protocol}</p></div>
+      <div><span class="text-muted-foreground text-xs">Severity</span><p class="font-bold mt-0.5 uppercase">${r.severity}</p></div>
+      <div><span class="text-muted-foreground text-xs">Source</span><p class="font-mono text-xs mt-0.5">${r.src}</p></div>
+      <div><span class="text-muted-foreground text-xs">Destination</span><p class="font-mono text-xs mt-0.5">${r.dst}</p></div>
+    </div>
+    <div class="mb-3">
+      <span class="text-xs text-muted-foreground uppercase">Snort Rule</span>
+      <pre class="mt-1 bg-black text-green-400 font-mono text-xs p-4 rounded-lg overflow-x-auto whitespace-pre-wrap">${r.rule}</pre>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="loadRuleInEditor(${idx});closeRuleModal();showTab('editor')" class="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700">Open in Editor</button>
+    </div>
+  `;
+  document.getElementById('ruleModal').classList.remove('hidden');
+  document.getElementById('ruleModal').classList.add('flex');
+}
+
+function closeRuleModal() {
+  document.getElementById('ruleModal').classList.add('hidden');
+  document.getElementById('ruleModal').classList.remove('flex');
+}
+
+function loadRuleInEditor(idx) {
+  if (idx === undefined) return;
+  const r = rules[idx];
+  document.getElementById('ruleEditor').value = `# Rule: ${r.description}\n# Category: ${r.category} | SID: ${r.sid}\n\n${r.rule}`;
+}
+
+$(document).ready(function() {
+  showTab('rules');
+  $('#rulesTable').DataTable({ pageLength: 25, order: [[0, 'asc']], columnDefs: [{orderable: false, targets: [6]}] });
+  $('#alertsTable').DataTable({ order: [[0, 'desc']], pageLength: 25 });
+});
+
+document.getElementById('ruleModal').addEventListener('click', function(e) {
+  if (e.target === this) closeRuleModal();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center gap-3">
+    <h2 class="text-3xl font-bold tracking-tight">Incident Response (DFIR)</h2>
+    <span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded font-medium">Simulated</span>
+  </div>
+  <div class="text-xs text-muted-foreground">Digital Forensics & Incident Response — Chapter 3.4</div>
+</div>
+
+<!-- Summary stats -->
+<div class="grid gap-4 md:grid-cols-4 mb-8">
+  {% set statuses = {'new': ('New', 'text-red-400', 'border-red-900/50 bg-red-950/10'),
+                     'investigating': ('Investigating', 'text-orange-400', 'border-orange-900/50 bg-orange-950/10'),
+                     'contained': ('Contained', 'text-yellow-400', 'border-yellow-900/50 bg-yellow-950/10'),
+                     'resolved': ('Resolved', 'text-green-400', 'border-green-900/50 bg-green-950/10')} %}
+  {% for status_key, (label, color, bg) in statuses.items() %}
+  <div class="rounded-xl border {{ bg }} shadow p-5">
+    <p class="text-xs uppercase font-bold mb-1 {{ color }}">{{ label }}</p>
+    <p class="text-3xl font-bold {{ color }}">{{ by_status[status_key] | length }}</p>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Kanban board -->
+<div class="grid gap-4 grid-cols-2 lg:grid-cols-4">
+  {% for status_key, (label, color, bg) in statuses.items() %}
+  <div class="space-y-3">
+    <div class="flex items-center justify-between">
+      <h3 class="font-semibold text-sm {{ color }}">{{ label }}</h3>
+      <span class="text-xs text-muted-foreground">{{ by_status[status_key] | length }}</span>
+    </div>
+    <div class="space-y-2 min-h-[200px]" id="col-{{ status_key }}">
+      {% for inc in by_status[status_key] %}
+      <a href="/incident-response/{{ inc.id }}" class="block rounded-lg border {% if inc.severity == 'critical' %}border-red-900/50{% elif inc.severity == 'high' %}border-orange-900/50{% elif inc.severity == 'medium' %}border-yellow-900/50{% else %}border-border{% endif %} bg-card hover:bg-muted/30 transition-colors p-3 shadow-sm">
+        <div class="flex items-start justify-between mb-1.5">
+          <span class="font-mono text-xs text-muted-foreground">{{ inc.incident_id }}</span>
+          <span class="text-xs font-bold {% if inc.severity == 'critical' %}text-red-400{% elif inc.severity == 'high' %}text-orange-400{% elif inc.severity == 'medium' %}text-yellow-400{% else %}text-blue-400{% endif %}">{{ inc.severity | upper }}</span>
+        </div>
+        <p class="text-xs font-semibold mb-2 leading-tight">{{ inc.title }}</p>
+        <div class="flex items-center justify-between text-xs text-muted-foreground">
+          <span>{{ inc.assigned_to or 'Unassigned' }}</span>
+          <span>{{ inc.created_at.strftime('%m/%d') }}</span>
+        </div>
+        {% if inc.device %}
+        <p class="text-xs text-muted-foreground mt-1 font-mono">{{ inc.device.hostname }}</p>
+        {% endif %}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Recent incidents table -->
+<div class="mt-8 rounded-xl border bg-card shadow overflow-hidden">
+  <div class="p-4 border-b">
+    <h3 class="font-semibold text-sm">All Incidents</h3>
+  </div>
+  <table id="incidentTable" class="w-full text-xs">
+    <thead>
+      <tr class="bg-muted/50 border-b">
+        <th class="text-left py-3 px-3">ID</th>
+        <th class="text-left py-3 px-3">Title</th>
+        <th class="text-left py-3 px-3">Severity</th>
+        <th class="text-left py-3 px-3">Status</th>
+        <th class="text-left py-3 px-3">Assigned To</th>
+        <th class="text-left py-3 px-3">Device</th>
+        <th class="text-left py-3 px-3">Created</th>
+        <th class="text-left py-3 px-3">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for inc in incidents %}
+      <tr class="border-b hover:bg-muted/20">
+        <td class="py-2 px-3 font-mono">{{ inc.incident_id }}</td>
+        <td class="py-2 px-3 font-medium">{{ inc.title }}</td>
+        <td class="py-2 px-3">
+          <span class="font-bold text-xs {% if inc.severity == 'critical' %}text-red-400{% elif inc.severity == 'high' %}text-orange-400{% elif inc.severity == 'medium' %}text-yellow-400{% else %}text-blue-400{% endif %}">{{ inc.severity | upper }}</span>
+        </td>
+        <td class="py-2 px-3">
+          <span class="inline-block px-2 py-0.5 rounded text-xs font-bold {% if inc.status == 'new' %}bg-red-500/20 text-red-400{% elif inc.status == 'investigating' %}bg-orange-500/20 text-orange-400{% elif inc.status == 'contained' %}bg-yellow-500/20 text-yellow-400{% else %}bg-green-500/20 text-green-400{% endif %}">
+            {{ inc.status | capitalize }}
+          </span>
+        </td>
+        <td class="py-2 px-3">{{ inc.assigned_to or '—' }}</td>
+        <td class="py-2 px-3 font-mono">{{ inc.device.hostname if inc.device else '—' }}</td>
+        <td class="py-2 px-3 text-muted-foreground">{{ inc.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="py-2 px-3">
+          <a href="/incident-response/{{ inc.id }}" class="text-blue-400 hover:underline text-xs mr-2">Detail</a>
+          <select onchange="updateStatus({{ inc.id }}, this.value)" class="text-xs bg-background border border-border rounded px-1 py-0.5">
+            <option value="">Move to...</option>
+            <option value="new">New</option>
+            <option value="investigating">Investigating</option>
+            <option value="contained">Contained</option>
+            <option value="resolved">Resolved</option>
+          </select>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+function updateStatus(incidentId, status) {
+  if (!status) return;
+  fetch(`/api/incidents/${incidentId}/status`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({status})
+  })
+  .then(r => r.json())
+  .then(data => { if (data.ok) location.reload(); });
+}
+
+$(document).ready(function() {
+  $('#incidentTable').DataTable({ order: [[6, 'desc']], pageLength: 15 });
+});
+</script>
+{% endblock %}

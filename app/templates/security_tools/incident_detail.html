@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-center gap-3 mb-6">
+  <a href="/incident-response" class="text-sm text-muted-foreground hover:text-foreground">← Back to Board</a>
+</div>
+
+<div class="flex items-start justify-between mb-6">
+  <div>
+    <div class="flex items-center gap-3 mb-1">
+      <span class="font-mono text-muted-foreground text-sm">{{ incident.incident_id }}</span>
+      <span class="text-xs font-bold px-2 py-0.5 rounded {% if incident.severity == 'critical' %}bg-red-500/20 text-red-400{% elif incident.severity == 'high' %}bg-orange-500/20 text-orange-400{% elif incident.severity == 'medium' %}bg-yellow-500/20 text-yellow-400{% else %}bg-blue-500/20 text-blue-400{% endif %}">{{ incident.severity | upper }}</span>
+      <span class="text-xs font-bold px-2 py-0.5 rounded {% if incident.status == 'new' %}bg-red-500/20 text-red-400{% elif incident.status == 'investigating' %}bg-orange-500/20 text-orange-400{% elif incident.status == 'contained' %}bg-yellow-500/20 text-yellow-400{% else %}bg-green-500/20 text-green-400{% endif %}">{{ incident.status | capitalize }}</span>
+    </div>
+    <h2 class="text-2xl font-bold">{{ incident.title }}</h2>
+  </div>
+  <select onchange="updateStatus({{ incident.id }}, this.value)" class="text-sm bg-background border border-border rounded px-3 py-2">
+    <option value="">Update Status...</option>
+    <option value="investigating" {{ 'selected' if incident.status == 'investigating' }}>Investigating</option>
+    <option value="contained" {{ 'selected' if incident.status == 'contained' }}>Contained</option>
+    <option value="resolved" {{ 'selected' if incident.status == 'resolved' }}>Resolved</option>
+  </select>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3 mb-6">
+  <div class="rounded-xl border bg-card shadow p-4">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-2">Incident Metadata</p>
+    <div class="space-y-1.5 text-xs">
+      <div class="flex justify-between"><span class="text-muted-foreground">Assigned To</span><span>{{ incident.assigned_to or 'Unassigned' }}</span></div>
+      <div class="flex justify-between"><span class="text-muted-foreground">Affected Device</span><span class="font-mono">{{ incident.device.hostname if incident.device else '—' }}</span></div>
+      <div class="flex justify-between"><span class="text-muted-foreground">Related CVE</span><span class="font-mono">{{ incident.vulnerability.cve_id if incident.vulnerability else '—' }}</span></div>
+      <div class="flex justify-between"><span class="text-muted-foreground">Created</span><span>{{ incident.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</span></div>
+      <div class="flex justify-between"><span class="text-muted-foreground">Updated</span><span>{{ incident.updated_at.strftime('%Y-%m-%d %H:%M UTC') }}</span></div>
+    </div>
+  </div>
+  <div class="lg:col-span-2 rounded-xl border bg-card shadow p-4">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-2">Description</p>
+    <p class="text-sm leading-relaxed">{{ incident.description }}</p>
+  </div>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-2 mb-6">
+  <!-- Timeline -->
+  <div class="rounded-xl border bg-card shadow p-4">
+    <h3 class="font-semibold text-sm mb-4">Incident Timeline</h3>
+    <div class="relative space-y-0">
+      <div class="absolute left-3 top-0 bottom-0 w-px bg-border"></div>
+      {% for event in incident.timeline() %}
+      <div class="flex gap-4 pl-8 pb-4 relative">
+        <div class="absolute left-1.5 top-1 w-3 h-3 rounded-full bg-blue-500 border-2 border-background flex-shrink-0"></div>
+        <div>
+          <p class="text-xs text-muted-foreground font-mono">{{ event.time }}</p>
+          <p class="text-xs font-semibold">{{ event.actor }}</p>
+          <p class="text-xs text-muted-foreground mt-0.5">{{ event.action }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- IOCs -->
+  <div class="rounded-xl border bg-card shadow p-4">
+    <h3 class="font-semibold text-sm mb-4">Indicators of Compromise (IOCs)</h3>
+    <div class="space-y-2">
+      {% for ioc in incident.iocs() %}
+      <div class="flex items-start gap-3 p-2 rounded-md bg-muted/30 border border-border">
+        <span class="text-xs font-bold text-muted-foreground w-16 flex-shrink-0">{{ ioc.type }}</span>
+        <code class="text-xs font-mono break-all flex-1">{{ ioc.value }}</code>
+        {% if ioc.description %}
+        <span class="text-xs text-muted-foreground flex-shrink-0">{{ ioc.description }}</span>
+        {% endif %}
+      </div>
+      {% else %}
+      <p class="text-sm text-muted-foreground">No IOCs recorded.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Evidence -->
+<div class="rounded-xl border bg-card shadow p-4 mb-6">
+  <h3 class="font-semibold text-sm mb-4">Evidence Collected</h3>
+  {% if incident.evidence() %}
+  <table class="w-full text-xs">
+    <thead><tr class="border-b"><th class="text-left py-2 px-3">Type</th><th class="text-left py-2 px-3">Filename</th><th class="text-left py-2 px-3">Size</th><th class="text-left py-2 px-3">SHA256 Hash</th><th class="text-left py-2 px-3">Collected</th></tr></thead>
+    <tbody>
+      {% for ev in incident.evidence() %}
+      <tr class="border-b hover:bg-muted/20">
+        <td class="py-2 px-3"><span class="px-1.5 py-0.5 rounded text-xs bg-muted text-muted-foreground">{{ ev.type }}</span></td>
+        <td class="py-2 px-3 font-mono">{{ ev.name }}</td>
+        <td class="py-2 px-3">{{ ev.size }}</td>
+        <td class="py-2 px-3 font-mono text-xs text-muted-foreground truncate max-w-xs">{{ ev.hash }}</td>
+        <td class="py-2 px-3 text-muted-foreground">{{ ev.collected }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-sm text-muted-foreground">No evidence collected yet.</p>
+  {% endif %}
+</div>
+
+<!-- Recommended actions -->
+{% if incident.recommended_actions %}
+<div class="rounded-xl border border-blue-900/50 bg-blue-950/10 shadow p-4">
+  <h3 class="font-semibold text-sm mb-3 text-blue-400">Recommended Actions</h3>
+  <div class="prose prose-sm text-sm leading-relaxed whitespace-pre-line">{{ incident.recommended_actions }}</div>
+</div>
+{% endif %}
+
+<script>
+function updateStatus(incidentId, status) {
+  if (!status) return;
+  fetch(`/api/incidents/${incidentId}/status`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({status})
+  })
+  .then(r => r.json())
+  .then(data => { if (data.ok) location.reload(); });
+}
+</script>
+{% endblock %}

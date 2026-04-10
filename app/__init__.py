@@ -13,7 +13,7 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     login_manager.init_app(app)
 
-    from app.models import user, device, vulnerability, scan_result, patch, alert  # noqa: F401
+    from app.models import user, device, vulnerability, scan_result, patch, alert, incident, endpoint_agent  # noqa: F401
     from app.routes.api import api_bp
     from app.routes.alerts import alerts_bp
     from app.routes.auth import auth_bp

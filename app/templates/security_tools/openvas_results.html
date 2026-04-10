@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center gap-3">
+    <h2 class="text-3xl font-bold tracking-tight">OpenVAS Vulnerability Scanner</h2>
+    <span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded font-medium">Simulated</span>
+    <span class="text-xs bg-green-600/20 text-green-400 px-2 py-0.5 rounded font-medium">Greenbone 22.4</span>
+  </div>
+  <div class="text-xs text-muted-foreground">
+    Report generated: 2026-04-10 08:14:32 UTC &nbsp;|&nbsp; Scan engine: OpenVAS 22.4.0
+  </div>
+</div>
+
+<!-- Stats cards -->
+<div class="grid gap-4 md:grid-cols-5 mb-8">
+  <div class="rounded-xl border bg-card text-card-foreground shadow p-5">
+    <p class="text-xs text-muted-foreground uppercase font-bold mb-1">Total Findings</p>
+    <p class="text-3xl font-bold">{{ data.total }}</p>
+  </div>
+  <div class="rounded-xl border border-red-900/50 bg-red-950/20 text-card-foreground shadow p-5">
+    <p class="text-xs text-red-400 uppercase font-bold mb-1">Critical</p>
+    <p class="text-3xl font-bold text-red-400">{{ data.critical_count }}</p>
+  </div>
+  <div class="rounded-xl border border-orange-900/50 bg-orange-950/20 text-card-foreground shadow p-5">
+    <p class="text-xs text-orange-400 uppercase font-bold mb-1">High</p>
+    <p class="text-3xl font-bold text-orange-400">{{ data.high_count }}</p>
+  </div>
+  <div class="rounded-xl border border-yellow-900/50 bg-yellow-950/20 text-card-foreground shadow p-5">
+    <p class="text-xs text-yellow-400 uppercase font-bold mb-1">Medium</p>
+    <p class="text-3xl font-bold text-yellow-400">{{ data.medium_count }}</p>
+  </div>
+  <div class="rounded-xl border border-blue-900/50 bg-blue-950/20 text-card-foreground shadow p-5">
+    <p class="text-xs text-blue-400 uppercase font-bold mb-1">Low</p>
+    <p class="text-3xl font-bold text-blue-400">{{ data.low_count }}</p>
+  </div>
+</div>
+
+<!-- Hosts summary -->
+<div class="rounded-xl border bg-card shadow p-4 mb-6 flex items-center gap-2 flex-wrap">
+  <span class="text-xs text-muted-foreground font-semibold uppercase mr-2">Scanned Hosts:</span>
+  {% for host in data.hosts | sort %}
+  <span class="font-mono text-xs bg-green-600/10 text-green-400 border border-green-900/30 px-2 py-0.5 rounded">{{ host }}</span>
+  {% endfor %}
+</div>
+
+<!-- Results table -->
+<div class="rounded-xl border bg-card shadow overflow-hidden">
+  <div class="p-5 border-b flex items-center justify-between">
+    <h3 class="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Vulnerability Findings</h3>
+    <span class="text-xs text-muted-foreground">NVT-based detection — Greenbone Vulnerability Manager</span>
+  </div>
+  <div class="p-4">
+    <table id="openvasTable" class="w-full text-sm">
+      <thead>
+        <tr class="border-b">
+          <th class="text-left py-3 px-3 font-semibold text-xs uppercase text-muted-foreground">#</th>
+          <th class="text-left py-3 px-3 font-semibold text-xs uppercase text-muted-foreground">Severity</th>
+          <th class="text-left py-3 px-3 font-semibold text-xs uppercase text-muted-foreground">CVSS</th>
+          <th class="text-left py-3 px-3 font-semibold text-xs uppercase text-muted-foreground">Host</th>
+          <th class="text-left py-3 px-3 font-semibold text-xs uppercase text-muted-foreground">Port</th>
+          <th class="text-left py-3 px-3 font-semibold text-xs uppercase text-muted-foreground">NVT Name</th>
+          <th class="text-left py-3 px-3 font-semibold text-xs uppercase text-muted-foreground">Family</th>
+          <th class="text-left py-3 px-3 font-semibold text-xs uppercase text-muted-foreground">CVEs</th>
+          <th class="text-left py-3 px-3 font-semibold text-xs uppercase text-muted-foreground">Fix Type</th>
+          <th class="text-left py-3 px-3 font-semibold text-xs uppercase text-muted-foreground">Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in data.results %}
+        <tr class="border-b hover:bg-muted/20 transition-colors">
+          <td class="py-2 px-3 text-xs text-muted-foreground">{{ loop.index }}</td>
+          <td class="py-2 px-3">
+            {% if r.threat == 'Critical' %}
+              <span class="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-semibold text-red-400">Critical</span>
+            {% elif r.threat == 'High' %}
+              <span class="inline-flex items-center rounded-full bg-orange-500/10 px-2 py-0.5 text-xs font-semibold text-orange-400">High</span>
+            {% elif r.threat == 'Medium' %}
+              <span class="inline-flex items-center rounded-full bg-yellow-500/10 px-2 py-0.5 text-xs font-semibold text-yellow-400">Medium</span>
+            {% else %}
+              <span class="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-semibold text-blue-400">{{ r.threat }}</span>
+            {% endif %}
+          </td>
+          <td class="py-2 px-3">
+            <span class="font-mono font-bold {% if r.severity >= 9.0 %}text-red-400{% elif r.severity >= 7.0 %}text-orange-400{% elif r.severity >= 4.0 %}text-yellow-400{% else %}text-blue-400{% endif %}">
+              {{ "%.1f"|format(r.severity) }}
+            </span>
+          </td>
+          <td class="py-2 px-3 font-mono text-xs">{{ r.host }}</td>
+          <td class="py-2 px-3 font-mono text-xs">{{ r.port }}</td>
+          <td class="py-2 px-3 text-xs font-medium max-w-xs">{{ r.name }}</td>
+          <td class="py-2 px-3 text-xs text-muted-foreground">{{ r.nvt_family }}</td>
+          <td class="py-2 px-3 text-xs">
+            {% for cve in r.cve_ids %}
+              <a href="https://nvd.nist.gov/vuln/detail/{{ cve }}" target="_blank" class="text-blue-400 hover:underline font-mono block">{{ cve }}</a>
+            {% else %}
+              <span class="text-muted-foreground">—</span>
+            {% endfor %}
+          </td>
+          <td class="py-2 px-3">
+            <span class="text-xs {% if r.solution_type == 'VendorFix' %}text-green-400{% else %}text-yellow-400{% endif %}">
+              {{ r.solution_type }}
+            </span>
+          </td>
+          <td class="py-2 px-3">
+            <button
+              onclick="showDetail({{ loop.index0 }})"
+              class="text-xs text-blue-400 hover:underline">
+              View
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Detail modal -->
+<div id="detailModal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center">
+  <div class="bg-card border border-border rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+    <div class="p-5 border-b flex items-center justify-between">
+      <h4 class="font-semibold" id="modalTitle">Finding Detail</h4>
+      <button onclick="closeModal()" class="text-muted-foreground hover:text-foreground text-lg">✕</button>
+    </div>
+    <div class="p-5 space-y-4" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const findings = {{ data.results | tojson }};
+
+function showDetail(idx) {
+  const r = findings[idx];
+  document.getElementById('modalTitle').textContent = r.name;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="grid grid-cols-2 gap-3 text-sm">
+      <div><span class="text-muted-foreground text-xs uppercase">Host</span><p class="font-mono mt-0.5">${r.host}</p></div>
+      <div><span class="text-muted-foreground text-xs uppercase">Port</span><p class="font-mono mt-0.5">${r.port}</p></div>
+      <div><span class="text-muted-foreground text-xs uppercase">Threat</span><p class="font-bold mt-0.5">${r.threat}</p></div>
+      <div><span class="text-muted-foreground text-xs uppercase">CVSS Score</span><p class="font-bold font-mono mt-0.5">${r.severity.toFixed(1)}</p></div>
+      <div><span class="text-muted-foreground text-xs uppercase">NVT Family</span><p class="mt-0.5">${r.nvt_family || 'N/A'}</p></div>
+      <div><span class="text-muted-foreground text-xs uppercase">Solution Type</span><p class="mt-0.5">${r.solution_type}</p></div>
+    </div>
+    ${r.cve_ids.length ? `<div><span class="text-muted-foreground text-xs uppercase">CVE References</span><div class="flex gap-2 mt-1 flex-wrap">${r.cve_ids.map(c=>`<span class="font-mono text-xs text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded">${c}</span>`).join('')}</div></div>` : ''}
+    <div>
+      <span class="text-muted-foreground text-xs uppercase">Description</span>
+      <p class="mt-1 text-sm text-muted-foreground leading-relaxed">${r.description}</p>
+    </div>
+    <div class="rounded-lg bg-green-950/30 border border-green-900/40 p-4">
+      <span class="text-green-400 text-xs uppercase font-bold">Recommended Solution</span>
+      <p class="mt-1 text-sm leading-relaxed">${r.solution}</p>
+    </div>
+  `;
+  document.getElementById('detailModal').classList.remove('hidden');
+  document.getElementById('detailModal').classList.add('flex');
+}
+
+function closeModal() {
+  document.getElementById('detailModal').classList.add('hidden');
+  document.getElementById('detailModal').classList.remove('flex');
+}
+
+document.getElementById('detailModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+$(document).ready(function() {
+  $('#openvasTable').DataTable({
+    order: [[1, 'asc'], [2, 'desc']],
+    pageLength: 25,
+    columnDefs: [{ orderable: false, targets: [9] }]
+  });
+});
+</script>
+{% endblock %}
