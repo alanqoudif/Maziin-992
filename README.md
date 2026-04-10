@@ -1,6 +1,6 @@
-# Tadamun Smart City Vulnerability Prioritization Dashboard
+# Vulnerability Prioritization Dashboard
 
-Academic graduation project for MEC focused on simulated cybersecurity operations in Tadamun Smart City (مدينة تضامن الذكية), Muscat, Oman.
+Academic graduation project for MEC focused on simulated cybersecurity operations in a smart-city-style enterprise environment.
 
 ## Features
 - Flask web dashboard with dark SOC-inspired UI.
