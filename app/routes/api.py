@@ -11,6 +11,7 @@ from app.ai.feature_engineering import build_features
 from app.models.alert import Alert
 from app.models.device import Device
 from app.models.patch import Patch
+from app.models.security_event import SecurityEvent
 from app.models.vulnerability import Vulnerability
 from app.routes.rbac import roles_required
 from app.scanners.real_scanner import get_scan_state
@@ -285,6 +286,176 @@ def top_critical_devices():
         )
     top = sorted(device_scores, key=lambda d: (d["weighted_risk"], d["critical_vuln_count"]), reverse=True)[:5]
     return jsonify({"items": top})
+
+
+@api_bp.get("/attacks/geo")
+@login_required
+def attacks_geo():
+    """Aggregate security events by source-IP country for the geo map."""
+    from app.data.geoip_lookup import lookup, COUNTRY_META
+
+    now = datetime.utcnow()
+    events = (
+        SecurityEvent.query
+        .filter(SecurityEvent.timestamp >= now - timedelta(days=30))
+        .with_entities(SecurityEvent.source_ip, SecurityEvent.event_type)
+        .all()
+    )
+
+    country_counts: dict = {}
+    country_top_event: dict = {}
+    for src_ip, event_type in events:
+        geo = lookup(src_ip or "")
+        code = geo["country_code"]
+        if code == "INT":
+            continue
+        country_counts[code] = country_counts.get(code, 0) + 1
+        if code not in country_top_event:
+            country_top_event[code] = Counter()
+        country_top_event[code][event_type] += 1
+
+    result = []
+    for code, count in sorted(country_counts.items(), key=lambda x: -x[1]):
+        meta = COUNTRY_META.get(code, (code, 0.0, 0.0))
+        top_type = country_top_event[code].most_common(1)[0][0] if country_top_event.get(code) else "Unknown"
+        result.append({
+            "country_code": code,
+            "country_name": meta[0],
+            "lat": meta[1],
+            "lng": meta[2],
+            "count": count,
+            "top_event_type": top_type,
+        })
+    return jsonify(result)
+
+
+@api_bp.get("/attacks/killchain")
+@login_required
+def attacks_killchain():
+    """Map security events to MITRE ATT&CK tactics via device → vulnerability → technique."""
+    from app.models.mitre import MitreAttack
+
+    TACTIC_ORDER = [
+        "Reconnaissance", "Resource Development", "Initial Access", "Execution",
+        "Persistence", "Privilege Escalation", "Defense Evasion", "Credential Access",
+        "Discovery", "Lateral Movement", "Collection", "Command and Control",
+        "Exfiltration", "Impact",
+    ]
+
+    now = datetime.utcnow()
+    events = (
+        SecurityEvent.query
+        .filter(SecurityEvent.timestamp >= now - timedelta(days=30))
+        .all()
+    )
+
+    # Build device_id → set of tactics via vulnerabilities
+    device_tactic_cache: dict = {}
+
+    def get_tactics_for_device(device_id):
+        if device_id in device_tactic_cache:
+            return device_tactic_cache[device_id]
+        device = Device.query.get(device_id) if device_id else None
+        tactics = set()
+        if device:
+            for vuln in device.vulnerabilities:
+                for technique in vuln.mitre_techniques:
+                    tactics.add(technique.tactic)
+        device_tactic_cache[device_id] = tactics
+        return tactics
+
+    # Count events per tactic; fallback: map event_type to tactic heuristically
+    FALLBACK_MAP = {
+        "Intrusion Attempt": "Initial Access",
+        "Login Failure": "Credential Access",
+        "Policy Violation": "Defense Evasion",
+        "Unauthorized Process": "Execution",
+    }
+
+    sev_order = ["critical", "high", "medium", "low", "info"]
+    tactic_counts: dict = {t: 0 for t in TACTIC_ORDER}
+    tactic_severity: dict = {t: {s: 0 for s in sev_order} for t in TACTIC_ORDER}
+
+    for e in events:
+        tactics = get_tactics_for_device(e.device_id)
+        if not tactics:
+            fallback = FALLBACK_MAP.get(e.event_type)
+            if fallback:
+                tactics = {fallback}
+        for tactic in tactics:
+            if tactic in tactic_counts:
+                tactic_counts[tactic] += 1
+                tactic_severity[tactic][e.severity] = tactic_severity[tactic].get(e.severity, 0) + 1
+
+    result = []
+    for tactic in TACTIC_ORDER:
+        result.append({
+            "tactic": tactic,
+            "count": tactic_counts[tactic],
+            "severity_breakdown": tactic_severity[tactic],
+        })
+    return jsonify(result)
+
+
+@api_bp.get("/attacks/timeline")
+@login_required
+def attacks_timeline():
+    """30 daily buckets × severity for a stacked bar chart."""
+    now = datetime.utcnow()
+    sev_order = ["critical", "high", "medium", "low", "info"]
+    days = 30
+
+    # Build empty buckets (day labels)
+    labels = [(now - timedelta(days=d)).strftime("%b %d") for d in range(days - 1, -1, -1)]
+    matrix = {label: {s: 0 for s in sev_order} for label in labels}
+
+    events = (
+        SecurityEvent.query
+        .filter(SecurityEvent.timestamp >= now - timedelta(days=days))
+        .with_entities(SecurityEvent.timestamp, SecurityEvent.severity)
+        .all()
+    )
+    for ts, sev in events:
+        label = ts.strftime("%b %d")
+        if label in matrix and sev in sev_order:
+            matrix[label][sev] += 1
+
+    return jsonify({
+        "labels": labels,
+        "datasets": {s: [matrix[lbl][s] for lbl in labels] for s in sev_order},
+    })
+
+
+@api_bp.get("/attacks/recent")
+@login_required
+def attacks_recent():
+    """Last 10 security events with geo lookup."""
+    from app.data.geoip_lookup import lookup
+
+    events = (
+        SecurityEvent.query
+        .order_by(SecurityEvent.timestamp.desc())
+        .limit(10)
+        .all()
+    )
+
+    result = []
+    for e in events:
+        geo = lookup(e.source_ip or "")
+        result.append({
+            "id": e.id,
+            "ts": e.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            "source": e.source,
+            "event_type": e.event_type,
+            "severity": e.severity,
+            "src_ip": e.source_ip or "—",
+            "src_country": geo["country_name"],
+            "src_country_code": geo["country_code"],
+            "dst_ip": e.dest_ip or "—",
+            "dst_host": e.device.hostname if e.device else "—",
+            "message": e.message,
+        })
+    return jsonify(result)
 
 
 @api_bp.get("/dashboard/recent-alerts")
