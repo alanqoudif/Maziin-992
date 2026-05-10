@@ -16,6 +16,7 @@ from app.models.scan_result import ScanResult
 from app.models.security_event import SecurityEvent
 from app.models.vulnerability import Vulnerability
 from app.routes.rbac import roles_required
+from app.scanners.simulator import topology_json
 
 security_tools_bp = Blueprint("security_tools", __name__)
 
@@ -335,7 +336,11 @@ def network_topology():
         "nodes_stopped": sum(1 for d in _GNS3_DEVICES if d["status"] == "stopped"),
         "devices": _GNS3_DEVICES,
     }
-    return render_template("security_tools/network_topology.html", gns3=gns3_status)
+    return render_template(
+        "security_tools/network_topology.html",
+        gns3=gns3_status,
+        topology=topology_json(),
+    )
 
 
 @security_tools_bp.route("/api/v1/gns3/status")
