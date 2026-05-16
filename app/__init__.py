@@ -1,8 +1,26 @@
+from pathlib import Path
+
 from flask import Flask
+from sqlalchemy import inspect
 
 from app.config import Config
 from app.extensions import db, login_manager, migrate
 from app.scanners.real_scanner import initialize_auto_scan
+
+
+def _ensure_sqlite_tables(app) -> None:
+    """Create ORM tables on SQLite if missing (avoids OperationalError when DB file exists but is empty)."""
+    uri = app.config.get("SQLALCHEMY_DATABASE_URI") or ""
+    if not uri.startswith("sqlite"):
+        return
+    raw = uri.replace("sqlite:///", "", 1)
+    db_path = Path(raw)
+    if not db_path.is_absolute():
+        db_path = Path.cwd() / db_path
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    with app.app_context():
+        if not inspect(db.engine).has_table("user"):
+            db.create_all()
 
 
 def create_app(config_class=Config):
@@ -13,7 +31,18 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     login_manager.init_app(app)
 
-    from app.models import user, device, vulnerability, scan_result, patch, alert, incident, endpoint_agent  # noqa: F401
+    from app.models import (  # noqa: F401 — register all tables with SQLAlchemy metadata
+        user,
+        device,
+        vulnerability,
+        scan_result,
+        patch,
+        alert,
+        incident,
+        endpoint_agent,
+        mitre,
+        security_event,
+    )
     from app.routes.api import api_bp
     from app.routes.alerts import alerts_bp
     from app.routes.auth import auth_bp
@@ -39,6 +68,8 @@ def create_app(config_class=Config):
     app.register_blueprint(control_center_bp)
     app.register_blueprint(ai_chat_bp)
     app.register_blueprint(api_bp, url_prefix="/api/v1")
+
+    _ensure_sqlite_tables(app)
 
     initialize_auto_scan(app)
 

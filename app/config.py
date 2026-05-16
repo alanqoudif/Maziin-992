@@ -1,15 +1,24 @@
 import os
 from datetime import timedelta
+from pathlib import Path
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_INSTANCE_DIR = _PROJECT_ROOT / "instance"
+_DEFAULT_SQLITE = _INSTANCE_DIR / "tadamun.db"
+
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///tadamun.db")
+    # Always resolve SQLite to project/instance (avoids empty cwd-relative DB files with no tables)
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        "DATABASE_URL",
+        f"sqlite:///{_DEFAULT_SQLITE.as_posix()}",
+    )
     SESSION_TIMEOUT_MINUTES = int(os.getenv("SESSION_TIMEOUT_MINUTES", "30"))
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=SESSION_TIMEOUT_MINUTES)
     REAL_SCAN_ENABLED = os.getenv("REAL_SCAN_ENABLED", "true").lower() in {"1", "true", "yes"}

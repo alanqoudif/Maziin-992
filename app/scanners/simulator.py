@@ -114,8 +114,76 @@ def generate_devices(total_target=200):
 
 
 def topology_json():
+    """Logical campus topology + plausible live-style metrics for the SOC diagram."""
+    # Representative instantaneous values (demo / simulation — not live SNMP).
+    traffic_edges = [
+        {
+            "id": "wan_pe",
+            "label": "WAN · BGP · ISP peering",
+            "mbps": 834,
+            "util_pct": 31.2,
+            "pps_k": 418,
+            "notes": "North–South aggregate",
+        },
+        {
+            "id": "edge_fw",
+            "label": "TDM-RTR-EDGE01 → FW",
+            "mbps": 812,
+            "util_pct": 29.8,
+            "pps_k": 392,
+            "notes": "Post-NAT inspected",
+        },
+        {
+            "id": "fw_core",
+            "label": "ASA / FTD → Core",
+            "mbps": 798,
+            "util_pct": 27.4,
+            "pps_k": 381,
+            "notes": "App-ID · SSL decrypt policy zones",
+        },
+        {
+            "id": "ew_it",
+            "label": "Core ↔ VLAN10 (IT)",
+            "mbps": 318,
+            "util_pct": 44.1,
+            "pps_k": 210,
+            "notes": "East–West · RDP/SSH/SMB",
+        },
+        {
+            "id": "ew_fin",
+            "label": "Core ↔ VLAN20 (Finance)",
+            "mbps": 156,
+            "util_pct": 38.6,
+            "pps_k": 112,
+            "notes": "M365 · ERP clients",
+        },
+        {
+            "id": "ew_hr",
+            "label": "Core ↔ VLAN30 (HR)",
+            "mbps": 94,
+            "util_pct": 22.3,
+            "pps_k": 68,
+            "notes": "HTTPS · print",
+        },
+        {
+            "id": "ew_adm",
+            "label": "Core ↔ VLAN40 (Admin)",
+            "mbps": 201,
+            "util_pct": 35.0,
+            "pps_k": 148,
+            "notes": "File · AD replication",
+        },
+        {
+            "id": "ew_iot",
+            "label": "Core ↔ VLAN50 (Smart)",
+            "mbps": 267,
+            "util_pct": 52.7,
+            "pps_k": 302,
+            "notes": "MQTT/RTSP · cameras",
+        },
+    ]
     return {
-        "city": "Tadamun Smart City (تضامن)",
+        "city": "Simulated enterprise smart city (academic lab)",
         "location": "Muscat, Oman",
         "departments": [
             {
@@ -130,6 +198,15 @@ def topology_json():
             "routers": ["TDM-RTR-CORE01", "TDM-RTR-EDGE01"],
             "switches": ["TDM-SW-CORE01", "TDM-SW-ACC01", "TDM-SW-ACC02", "TDM-SW-ACC03"],
             "total_devices": "~200",
+            "edge_hostname": "TDM-RTR-EDGE01",
+            "fw_hostname": "TDM-FW-PER01",
+            "core_hostname": "TDM-RTR-CORE01",
+            "core_switch": "TDM-SW-CORE01",
+        },
+        "traffic_snapshot": {
+            "source": "Simulated instantaneous metrics (demo — not live SNMP)",
+            "generated_at_utc": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "edges": traffic_edges,
         },
     }
 

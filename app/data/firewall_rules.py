@@ -1,4 +1,4 @@
-"""Cisco ASA-style firewall rules for the Tadamun network (simulated).
+"""Cisco ASA-style firewall rules for the simulated enterprise network (lab).
 
 VLANs:
   10 — IT Department      192.168.10.0/24
@@ -129,7 +129,7 @@ FIREWALL_RULES = [
         "src_ip": "0.0.0.0/0",
         "dst_ip": "192.168.10.20",
         "dst_port": "443",
-        "description": "Allow inbound HTTPS to Tadamun public web portal (DMZ server)",
+        "description": "Allow inbound HTTPS to public web portal (DMZ server)",
         "interface": "outside",
         "enabled": True,
         "hit_count": 284930,

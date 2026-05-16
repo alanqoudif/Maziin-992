@@ -90,6 +90,31 @@
           <p class="text-sm leading-relaxed text-foreground/90">{{ s.how_it_works }}</p>
         </div>
 
+        {% if s.attack_flow %}
+        <div class="md:col-span-3 -mt-2">
+          <div class="rounded-xl border border-amber-500/25 bg-gradient-to-br from-amber-950/25 via-card to-card p-5 md:p-6 shadow-inner">
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4">
+              <div>
+                <h4 class="text-sm font-semibold text-amber-200/90 uppercase tracking-wide">Real-world breach sequence</h4>
+                <p class="text-sm text-muted-foreground mt-1 max-w-3xl" dir="rtl">
+                  مسار الاختراق في الواقع: خطوات ترتيبية كما يحدث فعلياً (مكان المهاجم، ماذا يراه المستخدم، وماذا تلاحظ البنية).
+                </p>
+              </div>
+              <span class="text-xs font-mono text-amber-400/80 whitespace-nowrap">step-by-step / تسلسلي</span>
+            </div>
+            <ol class="relative ms-2 border-s-2 border-amber-500/30 ps-6 md:ps-8 space-y-6" aria-label="Attack timeline">
+              {% for step in s.attack_flow %}
+              <li class="relative">
+                <span class="absolute -start-[calc(0.5rem+2px)] top-1 flex h-4 w-4 -translate-x-1/2 rounded-full border-2 border-amber-500/60 bg-card ring-4 ring-amber-950/40" aria-hidden="true"></span>
+                <p class="text-sm font-semibold text-foreground">{{ loop.index }}. {{ step.phase }}</p>
+                <p class="text-sm text-muted-foreground leading-relaxed mt-1.5">{{ step.reality }}</p>
+              </li>
+              {% endfor %}
+            </ol>
+          </div>
+        </div>
+        {% endif %}
+
         <!-- Indicators -->
         <div>
           <h4 class="text-sm font-semibold text-muted-foreground uppercase mb-2">Detection Indicators (IOC)</h4>

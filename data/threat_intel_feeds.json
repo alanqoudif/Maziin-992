@@ -86,7 +86,7 @@
   },
   "misp": {
     "name": "MISP (Malware Information Sharing Platform)",
-    "description": "Threat sharing platform — Tadamun feeds",
+    "description": "Threat sharing platform — lab IOC feeds",
     "last_updated": "2026-04-10T05:30:00Z",
     "total_events": 15,
     "events": [
@@ -109,19 +109,19 @@
   },
   "shodan": {
     "name": "Shodan",
-    "description": "Internet-exposed assets matching Tadamun profile",
+    "description": "Internet-exposed assets matching the simulated enterprise profile",
     "last_updated": "2026-04-10T04:00:00Z",
-    "query": "org:Tadamun Smart City OR asn:AS12345",
+    "query": "org:\"Enterprise SOC Lab\" OR asn:AS12345",
     "total_results": 12,
     "results": [
       {"ip": "192.168.10.20", "port": 443, "service": "Apache httpd 2.4.49", "banner": "HTTP/1.1 200 OK\r\nServer: Apache/2.4.49", "vulns": ["CVE-2021-41773"], "note": "Vulnerable Apache version exposed"},
       {"ip": "192.168.10.1", "port": 8443, "service": "Fortinet FortiGate SSL-VPN", "banner": "FortiOS 6.4.5", "vulns": ["CVE-2022-42475"], "note": "Outdated FortiOS version"},
       {"ip": "192.168.30.1", "port": 443, "service": "Cisco IOS XE Web UI", "banner": "Cisco IOS XE 16.11.1", "vulns": ["CVE-2023-20198"], "note": "Vulnerable Cisco IOS XE"},
-      {"ip": "192.168.40.35", "port": 9200, "service": "Elasticsearch 7.10.0", "banner": "cluster: tadamun-elk, status: green", "vulns": [], "note": "Elasticsearch exposed without authentication"},
+      {"ip": "192.168.40.35", "port": 9200, "service": "Elasticsearch 7.10.0", "banner": "cluster: corp-elk, status: green", "vulns": [], "note": "Elasticsearch exposed without authentication"},
       {"ip": "192.168.40.40", "port": 2375, "service": "Docker Remote API", "banner": "Docker/20.10.7", "vulns": [], "note": "Unauthenticated Docker API exposed"},
       {"ip": "192.168.40.25", "port": 6379, "service": "Redis 6.0.16", "banner": "+PONG\r\n", "vulns": [], "note": "Redis without authentication"},
       {"ip": "192.168.50.15", "port": 21, "service": "vsftpd 3.0.3", "banner": "220 (vsFTPd 3.0.3) Anonymous login enabled", "vulns": [], "note": "FTP anonymous login enabled"},
-      {"ip": "192.168.30.10", "port": 23, "service": "Telnet", "banner": "Welcome to Tadamun Network Device", "vulns": [], "note": "Telnet cleartext service exposed"},
+      {"ip": "192.168.30.10", "port": 23, "service": "Telnet", "banner": "Welcome to Lab Network Device", "vulns": [], "note": "Telnet cleartext service exposed"},
       {"ip": "192.168.20.45", "port": 445, "service": "Windows SMBv1", "banner": "SMB 1.0 enabled", "vulns": ["CVE-2017-0144"], "note": "EternalBlue-vulnerable SMBv1"},
       {"ip": "192.168.30.5", "port": 161, "service": "SNMP public", "banner": "sysDescr: Cisco Catalyst 3850", "vulns": [], "note": "SNMP community string 'public'"},
       {"ip": "192.168.40.45", "port": 3000, "service": "Grafana 8.2.0", "banner": "Grafana v8.2.0", "vulns": ["CVE-2021-43798"], "note": "Vulnerable Grafana path traversal"},

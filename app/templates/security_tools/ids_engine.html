@@ -188,11 +188,11 @@ alert http $HOME_NET any -> $EXTERNAL_NET any (
 )
 
 # To load this rule in Suricata:
-#   suricata-update add-source tadamun /etc/suricata/rules/tadamun.rules
+#   suricata-update add-source lab /etc/suricata/rules/lab.rules
 #   systemctl restart suricata
 #
 # To load in Snort 3:
-#   snort -c /etc/snort/snort.lua --lua "include '/etc/snort/rules/tadamun.rules'"
+#   snort -c /etc/snort/snort.lua --lua "include '/etc/snort/rules/lab.rules'"
     </textarea>
     <div class="mt-4 flex gap-2">
       <button onclick="loadRuleInEditor()" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">Load Selected Rule</button>

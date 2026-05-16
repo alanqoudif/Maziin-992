@@ -97,7 +97,7 @@ def setup_mfa():
     
     # Generate QR Code
     totp = pyotp.TOTP(secret)
-    provisioning_uri = totp.provisioning_uri(name=current_user.email, issuer_name="Tadamun SOC")
+    provisioning_uri = totp.provisioning_uri(name=current_user.email, issuer_name="SOC Dashboard")
     
     img = qrcode.make(provisioning_uri)
     buf = io.BytesIO()

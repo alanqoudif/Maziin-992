@@ -27,14 +27,14 @@
       <div class="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-sm flex-shrink-0">🤖</div>
       <div class="bg-muted/40 rounded-2xl rounded-tl-none px-4 py-3 max-w-[85%]">
         <p class="text-sm leading-relaxed">
-          مرحباً! أنا مساعدك الأمني المدعوم بالذكاء الاصطناعي.<br><br>
-          يمكنني مساعدتك في:
+          Hi! I’m your AI security assistant.<br><br>
+          I can help with:
         </p>
         <ul class="text-sm mt-2 space-y-1 list-none">
-          <li>🔍 شرح الثغرات الأمنية (CVEs) وكيفية استغلالها</li>
-          <li>🛡️ إجراءات الحماية والتخفيف لكل هجمة</li>
-          <li>📋 تقنيات MITRE ATT&CK</li>
-          <li>🔧 خطوات الاستجابة للحوادث</li>
+          <li>🔍 CVEs, exploitation concepts, and impact</li>
+          <li>🛡️ Hardening and mitigation steps</li>
+          <li>📋 MITRE ATT&amp;CK techniques</li>
+          <li>🔧 Incident response playbooks</li>
         </ul>
         <p class="text-sm mt-2">How can I help you today?</p>
       </div>
@@ -74,9 +74,9 @@
 
     <!-- Quick prompts -->
     <div class="flex flex-wrap gap-1.5 mt-2">
-      <button onclick="setPrompt('ما هي أخطر الثغرات الأمنية لعام 2024 وكيف أحمي نفسي منها؟')"
+      <button onclick="setPrompt('What were the highest-risk vulnerabilities in 2024 and how should I prioritize patching?')"
               class="text-xs bg-muted/40 hover:bg-muted/80 border border-border rounded-full px-3 py-1 transition-colors">
-        أخطر الثغرات 2024
+        Top risks 2024
       </button>
       <button onclick="setPrompt('Explain CVE-2017-0144 (EternalBlue) and how to patch it')"
               class="text-xs bg-muted/40 hover:bg-muted/80 border border-border rounded-full px-3 py-1 transition-colors">
@@ -90,9 +90,9 @@
               class="text-xs bg-muted/40 hover:bg-muted/80 border border-border rounded-full px-3 py-1 transition-colors">
         CVSS Scoring
       </button>
-      <button onclick="setPrompt('ما هي خطوات الاستجابة للحوادث الأمنية؟')"
+      <button onclick="setPrompt('What are the core steps in a security incident response process?')"
               class="text-xs bg-muted/40 hover:bg-muted/80 border border-border rounded-full px-3 py-1 transition-colors">
-        الاستجابة للحوادث
+        Incident response
       </button>
     </div>
   </div>

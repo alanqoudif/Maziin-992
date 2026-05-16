@@ -1,4 +1,4 @@
-"""Snort/Suricata IDS rules for Tadamun network (simulated)."""
+"""Snort/Suricata IDS rules for the simulated enterprise network (lab)."""
 
 SNORT_RULES = [
     # ── EXPLOIT ──────────────────────────────────────────────────────────────
@@ -445,6 +445,6 @@ RULE_STATS = {
     "categories": {cat: sum(1 for r in SNORT_RULES if r["category"] == cat) for cat in RULE_CATEGORIES},
     "engine_snort": "Snort 3.1.82.0",
     "engine_suricata": "Suricata 7.0.3",
-    "ruleset": "Emerging Threats Pro + Custom Tadamun",
+    "ruleset": "Emerging Threats Pro + Custom lab rules",
     "last_updated": "2026-04-10 00:00:00 UTC",
 }

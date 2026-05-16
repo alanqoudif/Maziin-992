@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<report id="ov-rpt-tadamun-2026" extension="xml" type="scan" content_type="text/xml">
-  <name>Tadamun Smart City — Full Network OpenVAS Scan 2026-04-10</name>
+<report id="ov-rpt-lab-2026" extension="xml" type="scan" content_type="text/xml">
+  <name>Full Network OpenVAS Scan — Simulated Enterprise 2026-04-10</name>
   <results max="30" start="1">
 
     <result id="r-001">

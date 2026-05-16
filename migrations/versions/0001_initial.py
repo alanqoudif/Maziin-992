@@ -1,4 +1,4 @@
-"""Initial schema for Tadamun dashboard.
+"""Initial schema for vulnerability prioritization dashboard.
 
 Revision ID: 0001_initial
 Revises:

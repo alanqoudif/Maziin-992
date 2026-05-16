@@ -10,7 +10,7 @@ from flask_login import login_required
 
 ai_chat_bp = Blueprint("ai_chat", __name__)
 
-_SYSTEM_PROMPT = """You are an expert cybersecurity assistant integrated into the Tadamun Smart City Security Operations Center (SOC) dashboard.
+_SYSTEM_PROMPT = """You are an expert cybersecurity assistant integrated into the Security Operations Center (SOC) vulnerability prioritization dashboard.
 
 Your role:
 - Help security analysts understand vulnerabilities, CVEs, and attack techniques

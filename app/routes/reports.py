@@ -34,8 +34,8 @@ def executive_report():
 
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=A4)
-    pdf.setTitle(f"Tadamun {report_type.title()} Security Report")
-    pdf.drawString(72, 800, f"Tadamun Smart City - {report_type.title()} Security Report")
+    pdf.setTitle(f"Vulnerability Prioritization {report_type.title()} Security Report")
+    pdf.drawString(72, 800, f"Enterprise Security Lab — {report_type.title()} Security Report")
     pdf.drawString(72, 780, f"Date Scope: {date_from} to {date_to}")
     pdf.drawString(72, 755, f"Total Devices: {total_devices}")
     pdf.drawString(72, 740, f"Total Vulnerabilities: {total_vulns}")

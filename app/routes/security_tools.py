@@ -2,10 +2,11 @@ import ipaddress
 import json
 import random
 import re
+import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, render_template, request, session
 from flask_login import login_required
 
 from app.extensions import db
@@ -16,9 +17,51 @@ from app.models.scan_result import ScanResult
 from app.models.security_event import SecurityEvent
 from app.models.vulnerability import Vulnerability
 from app.routes.rbac import roles_required
-from app.scanners.simulator import topology_json
+from app.scanners.simulator import DEPARTMENT_TYPE_WEIGHTS, DEPARTMENTS, topology_json
 
 security_tools_bp = Blueprint("security_tools", __name__)
+
+_TOPOLOGY_USER_DEVICES_KEY = "topology_user_devices"
+_MAX_USER_TOPOLOGY_DEVICES = 80
+_TOPOLOGY_DEVICE_TYPES = frozenset(
+    t for weights in DEPARTMENT_TYPE_WEIGHTS.values() for t in weights.keys()
+)
+_DEPARTMENT_NAMES = frozenset(d[0] for d in DEPARTMENTS)
+
+
+def _session_topology_user_devices():
+    raw = session.get(_TOPOLOGY_USER_DEVICES_KEY)
+    if not raw or not isinstance(raw, list):
+        return []
+    return [x for x in raw if isinstance(x, dict)]
+
+
+def _assign_lab_ip(dept_name, user_devices):
+    row = next((d for d in DEPARTMENTS if d[0] == dept_name), None)
+    if not row:
+        return ""
+    subnet = row[2]
+    n = sum(1 for u in user_devices if u.get("department") == dept_name)
+    hosts = list(ipaddress.ip_network(subnet, strict=False).hosts())
+    if not hosts:
+        return ""
+    i = min(80 + n, len(hosts) - 1)
+    return str(hosts[i])
+
+
+def build_topology_for_view():
+    topo = topology_json()
+    user_list = _session_topology_user_devices()
+    for d in topo["departments"]:
+        extra = sum(1 for u in user_list if u.get("department") == d["name"])
+        d["device_count"] = d["device_count"] + extra
+    base_total = sum(c for _, _, _, c in DEPARTMENTS)
+    topo["core_network"] = {
+        **topo["core_network"],
+        "total_devices": f"~{base_total + len(user_list)}",
+    }
+    topo["user_added_devices"] = list(user_list)
+    return topo
 
 
 # ── OpenVAS ──────────────────────────────────────────────────────────────────
@@ -329,7 +372,7 @@ def network_topology():
         "port": 3080,
         "version": "2.2.44",
         "connected": True,
-        "project_name": "Tadamun-SmartCity-Lab",
+        "project_name": "Enterprise-SOC-Lab",
         "project_id": "a7f2c8d1-1234-4b5e-9a0c-8e3f12b45678",
         "nodes_total": len(_GNS3_DEVICES),
         "nodes_running": sum(1 for d in _GNS3_DEVICES if d["status"] == "running"),
@@ -339,8 +382,61 @@ def network_topology():
     return render_template(
         "security_tools/network_topology.html",
         gns3=gns3_status,
-        topology=topology_json(),
+        topology=build_topology_for_view(),
     )
+
+
+@security_tools_bp.route("/network-topology/devices", methods=["POST"])
+@login_required
+def network_topology_add_device():
+    if len(_session_topology_user_devices()) >= _MAX_USER_TOPOLOGY_DEVICES:
+        return jsonify({"ok": False, "error": "Maximum simulated devices for this session reached."}), 400
+    data = request.get_json(force=True, silent=True) or {}
+    dept = (data.get("department") or "").strip()
+    if dept not in _DEPARTMENT_NAMES:
+        return jsonify({"ok": False, "error": "Invalid department."}), 400
+    dtype = (data.get("device_type") or "workstation").strip().lower()
+    if dtype not in _TOPOLOGY_DEVICE_TYPES:
+        return jsonify({"ok": False, "error": "Invalid device type."}), 400
+    hostname = (data.get("hostname") or "").strip()
+    user_before = _session_topology_user_devices()
+    ip_in = (data.get("ip_address") or "").strip()
+    if ip_in:
+        try:
+            ipaddress.ip_address(ip_in)
+        except ValueError:
+            return jsonify({"ok": False, "error": "Invalid IP address."}), 400
+    ip_address = ip_in if ip_in else _assign_lab_ip(dept, user_before)
+    if not hostname:
+        short = uuid.uuid4().hex[:5].upper()
+        hostname = f"TDM-LAB-{short}"
+
+    device = {
+        "id": uuid.uuid4().hex[:12],
+        "hostname": hostname,
+        "department": dept,
+        "device_type": dtype,
+        "ip_address": ip_address,
+        "added_at_utc": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+    }
+    session[_TOPOLOGY_USER_DEVICES_KEY] = user_before + [device]
+    session.modified = True
+    return jsonify({"ok": True, "device": device})
+
+
+@security_tools_bp.route("/network-topology/devices/<device_id>", methods=["DELETE"])
+@login_required
+def network_topology_remove_device(device_id):
+    rid = (device_id or "").strip()
+    if not rid:
+        return jsonify({"ok": False, "error": "Missing id."}), 400
+    user_list = _session_topology_user_devices()
+    filtered = [u for u in user_list if u.get("id") != rid]
+    if len(filtered) == len(user_list):
+        return jsonify({"ok": False, "error": "Device not found."}), 404
+    session[_TOPOLOGY_USER_DEVICES_KEY] = filtered
+    session.modified = True
+    return jsonify({"ok": True})
 
 
 @security_tools_bp.route("/api/v1/gns3/status")
@@ -350,7 +446,7 @@ def gns3_status_api():
         "server": "localhost:3080",
         "version": "2.2.44",
         "status": "connected",
-        "project": "Tadamun-SmartCity-Lab",
+        "project": "Enterprise-SOC-Lab",
         "nodes": _GNS3_DEVICES,
         "links": 14,
         "computes": [{"id": "local", "host": "127.0.0.1", "port": 3080, "protocol": "http", "connected": True}],
@@ -637,6 +733,28 @@ _ATTACK_SCENARIOS = [
             "Use encrypted protocols (TLS/HTTPS) to limit damage if MITM succeeds",
         ],
         "cve_refs": ["CVE-2018-14767", "CVE-2020-12695"],
+        "attack_flow": [
+            {
+                "phase": "Physical / logical placement",
+                "reality": "The attacker is on the same Layer‑2 segment as victims — same office switch, a misconfigured guest VLAN, or a compromised workstation. They do not need to touch the server directly.",
+            },
+            {
+                "phase": "Fake gateway claims",
+                "reality": "Tools like Ettercap or arpspoof send unsolicited ARP replies: “IP 192.168.1.1 is at my MAC.” Switches forward frames to the attacker because they believe the forged mapping.",
+            },
+            {
+                "phase": "Traffic actually detours",
+                "reality": "With IP forwarding on, the attacker relays packets so the user still browses the web; latency may tick up slightly. Most users notice nothing.",
+            },
+            {
+                "phase": "Harvesting",
+                "reality": "Plain HTTP, cleartext protocols, or TLS downgrades expose passwords and cookies. For HTTPS sites, users may see certificate warnings — many click through.",
+            },
+            {
+                "phase": "What you would see",
+                "reality": "Duplicate IP alerts, one MAC claiming to be the router in ARP tables, IDS noise on ARP floods — until someone clears ARP or the attacker stops.",
+            },
+        ],
     },
     {
         "id": "syn-flood",
@@ -668,6 +786,24 @@ _ATTACK_SCENARIOS = [
             "Increase the SYN backlog queue size (short-term workaround)",
         ],
         "cve_refs": [],
+        "attack_flow": [
+            {
+                "phase": "Opening the hose",
+                "reality": "From a single machine or a botnet, the attacker sends TCP SYNs to your public IP (often port 80/443), spoofing random sources so you cannot block one offender.",
+            },
+            {
+                "phase": "Server state fills up",
+                "reality": "Each half‑open SYN consumes a slot in the OS backlog. Legitimate clients still send SYNs, but the queue is full — they time out while “the server is up.”",
+            },
+            {
+                "phase": "Real-world symptom",
+                "reality": "Website loads spin forever; APIs fail; monitoring shows high SYN_RECV. Executives call it “the site is down” even though ping may still work.",
+            },
+            {
+                "phase": "Attacker goal",
+                "reality": "Extortion, distraction, or masking another intrusion during the chaos. Stops when traffic is scrubbed or SYN defenses engage.",
+            },
+        ],
     },
     {
         "id": "ssh-brute-force",
@@ -699,6 +835,24 @@ _ATTACK_SCENARIOS = [
             "Enable multi-factor authentication (TOTP + key)",
         ],
         "cve_refs": ["CVE-2023-38408"],
+        "attack_flow": [
+            {
+                "phase": "Discovery",
+                "reality": "A scan or Shodan-style search finds tcp/22 open on a VPS, router, or appliance. The banner often reveals “OpenSSH 8.x on Ubuntu.”",
+            },
+            {
+                "phase": "Automation at scale",
+                "reality": "A tool tries user root, ubuntu, admin against a wordlist — hundreds to thousands of attempts per minute if nothing slows it down.",
+            },
+            {
+                "phase": "The one weak password",
+                "reality": "Eventually a common credential works, or a reused password from a leak. auth.log shows a burst of failures then one success.",
+            },
+            {
+                "phase": "Persistence in practice",
+                "reality": "The attacker drops an authorized_keys entry, creates a backdoor user, or installs a cron job. From there they pivot to internal networks if the host routes there.",
+            },
+        ],
     },
     {
         "id": "dns-spoofing",
@@ -730,6 +884,24 @@ _ATTACK_SCENARIOS = [
             "Pin certificates (HSTS, HPKP) to limit phishing impact",
         ],
         "cve_refs": ["CVE-2008-1447"],
+        "attack_flow": [
+            {
+                "phase": "Race with the resolver",
+                "reality": "When your laptop asks the resolver for a name, the attacker blasts forged answers, gambling on the right 16‑bit transaction ID before the real upstream reply arrives.",
+            },
+            {
+                "phase": "Poison sticks in cache",
+                "reality": "If one forged answer wins, the resolver stores the wrong IP for minutes or hours (TTL). Every client using that resolver is steered wrong — not just one machine.",
+            },
+            {
+                "phase": "User experience",
+                "reality": "The browser opens a pixel‑perfect login clone on a look‑alike domain or wrong IP. Some get TLS errors; many ignore them. Traffic may load slightly slower at first.",
+            },
+            {
+                "phase": "Scale",
+                "reality": "Cafés, hotel Wi‑Fi, and ISPs with old resolvers were classic targets. Today DNSSEC and DoH reduce but do not eliminate the model.",
+            },
+        ],
     },
     {
         "id": "port-scan",
@@ -762,6 +934,24 @@ _ATTACK_SCENARIOS = [
             "Segment the network — limit blast radius of any single scan",
         ],
         "cve_refs": [],
+        "attack_flow": [
+            {
+                "phase": "Quiet sweep",
+                "reality": "From a VPN or cloud host, Nmap scans your range — often /24 or selected subnets. Most packets are dropped; a few SYN‑ACKs leak which services exist.",
+            },
+            {
+                "phase": "Fingerprinting",
+                "reality": "The attacker probes banners and TLS certs: “Windows Server 2012, IIS 8.5, RDP 3389 open.” That becomes a shopping list for the next phase.",
+            },
+            {
+                "phase": "Operational noise",
+                "reality": "Firewall and IDS logs show a burst of connections to many ports from one IP. Help desk usually does not notice; SOC might if rules are tuned.",
+            },
+            {
+                "phase": "Why it matters",
+                "reality": "No shells yet — only a map. The next day the attacker returns with exploits matched to what they saw.",
+            },
+        ],
     },
     {
         "id": "eternalblue",
@@ -795,6 +985,24 @@ _ATTACK_SCENARIOS = [
             "Segment servers from workstations — limit lateral movement paths",
         ],
         "cve_refs": ["CVE-2017-0144", "CVE-2017-0145"],
+        "attack_flow": [
+            {
+                "phase": "Exposure",
+                "reality": "An unpatched host has TCP 445 reachable from another workstation or the internet (misconfigured ACL, flat network, or legacy app requirement).",
+            },
+            {
+                "phase": "Single malformed SMB",
+                "reality": "Exploit frame hits srv.sys; the kernel executes attacker‑controlled code. No password is typed — this is not “logging in,” it is memory corruption.",
+            },
+            {
+                "phase": "On screen / in logs",
+                "reality": "A tech might see a brief service hiccup. Event logs can show odd SMB sessions; EDR may flag shellcode if the product knows the signature.",
+            },
+            {
+                "phase": "WannaCry‑style spread",
+                "reality": "Malware uses the same primitive to copy itself to the next machine over SMB. Within hours, encryption or implants can cover a subnet if 445 is wide open.",
+            },
+        ],
     },
     {
         "id": "evil-twin",
@@ -827,6 +1035,24 @@ _ATTACK_SCENARIOS = [
             "Educate users never to accept unexpected certificate warnings",
         ],
         "cve_refs": [],
+        "attack_flow": [
+            {
+                "phase": "Hardware in the room",
+                "reality": "A $30 router or laptop + USB Wi‑Fi broadcasts your well‑known SSID (“Corp‑Guest”) on a stronger channel than the real AP.",
+            },
+            {
+                "phase": "Clients join the fake",
+                "reality": "Phones and laptops prefer the loudest trusted name. Users think they are on normal Wi‑Fi; DHCP hands out the attacker’s gateway and DNS.",
+            },
+            {
+                "phase": "Transparent proxy",
+                "reality": "All web traffic crosses the attacker. Captive portals harvest OAuth creds; HTTP leaks everything; TLS MITM works if users accept bad certs.",
+            },
+            {
+                "phase": "Walk‑away",
+                "reality": "The attacker shuts the AP and leaves. Victims may only remember “Wi‑Fi was weird today” while accounts are already for sale.",
+            },
+        ],
     },
     {
         "id": "c2-beacon",

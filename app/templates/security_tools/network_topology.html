@@ -1,7 +1,51 @@
 {% extends "base.html" %}
 {% block content %}
-<p class="text-sm text-muted-foreground mb-4 max-w-4xl leading-relaxed" dir="rtl">
-  توضيح الطوبولوجيا المنطقية لمشروع تضامن، مسارات حركة البيانات داخل الشبكة المحاكاة، ومسار HTTP/API بين المتصفح وخادم Flask — ثلاثة تبويبات أدناه.
+<style>
+  @keyframes topo-dash-move {
+    to { stroke-dashoffset: -48; }
+  }
+  @keyframes topo-dash-move-rev {
+    to { stroke-dashoffset: 48; }
+  }
+  @keyframes topo-glow-pulse {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 1; }
+  }
+  .topo-flow-anim-fwd {
+    stroke-dasharray: 5 12;
+    animation: topo-dash-move 1.25s linear infinite;
+  }
+  .topo-flow-anim-rev {
+    stroke-dasharray: 5 12;
+    animation: topo-dash-move-rev 1.45s linear infinite;
+  }
+  .topo-node-glass {
+    fill: hsl(217.2 32.6% 9%);
+    stroke: hsl(217.2 32.6% 22%);
+    stroke-width: 1.25;
+  }
+  .topo-link-base {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  #topo-lan-svg {
+    touch-action: none;
+    user-select: none;
+  }
+  .topo-draggable {
+    cursor: grab;
+  }
+  .topo-draggable.dragging {
+    cursor: grabbing;
+  }
+  .topo-draggable .topo-node-glass {
+    pointer-events: visiblePainted;
+  }
+</style>
+
+<p class="text-sm text-muted-foreground mb-4 max-w-4xl leading-relaxed">
+  Layered SOC-style reference: WAN edge → perimeter firewall → L3 core/VLANs, with full animated flow (lasers/packets) showing direction. Figures below the diagram are <span class="text-foreground">descriptive simulation</span> aligned with the same model—not live SNMP/NetFlow.
 </p>
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
   <h2 class="text-3xl font-bold tracking-tight">Network Topology &amp; Traffic Flow</h2>
@@ -15,71 +59,217 @@
 <!-- Logical topology -->
 <div id="topo-logical">
   <div class="grid gap-6 lg:grid-cols-4">
-    <div class="lg:col-span-3 rounded-xl border bg-card shadow p-6 min-h-[600px] flex flex-col relative overflow-hidden">
-      <div class="mb-3 text-xs text-muted-foreground space-y-1">
-        <p><span class="font-semibold text-foreground">North–South:</span> traffic enters/leaves the campus through the edge path (Internet → Firewall → Core).</p>
-        <p><span class="font-semibold text-foreground">East–West:</span> inter-segment traffic is routed at the core (L3) between VLANs; policies differ per department.</p>
+    <div class="lg:col-span-3 rounded-xl border bg-card shadow p-6 min-h-[620px] flex flex-col relative overflow-hidden">
+      <div class="mb-4 flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">
+        <div class="flex items-center gap-2"><span class="inline-block w-8 h-0.5 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]"></span> North–South (through the edge)</div>
+        <div class="flex items-center gap-2"><span class="inline-block w-8 h-0.5 rounded-full bg-violet-400 shadow-[0_0_8px_#a78bfa]"></span> East–West (VLANs via core)</div>
+        <div class="flex items-center gap-2"><span class="inline-block w-8 h-0.5 rounded-full bg-emerald-400/90"></span> Bidirectional paths (forward/reverse animation)</div>
+        <span class="text-foreground/80">~{{ topology.core_network.total_devices }} endpoints · SVIs on core</span>
       </div>
-      <div class="flex-1 flex items-center justify-center">
-        <svg width="100%" height="550" viewBox="0 0 800 550" class="max-w-4xl" aria-label="Logical network diagram">
-          <!-- North-south ingress -->
-          <text x="400" y="22" text-anchor="middle" font-size="9" fill="currentColor" class="opacity-70">North–South (Internet ↔ campus)</text>
-          <rect x="350" y="28" width="100" height="40" rx="5" fill="none" stroke="currentColor" stroke-width="1" />
-          <text x="400" y="53" text-anchor="middle" font-size="10" fill="currentColor">Internet</text>
-          <path d="M 400 68 L 400 88" stroke="currentColor" stroke-width="2" stroke-dasharray="5 3" />
-          <text x="412" y="82" font-size="8" fill="currentColor" class="opacity-60">NAT / edge</text>
-          <rect x="370" y="100" width="60" height="40" rx="2" fill="none" stroke="currentColor" stroke-width="2" />
-          <text x="400" y="125" text-anchor="middle" font-size="10" fill="currentColor" class="font-bold">Firewall</text>
-          <line x1="400" y1="140" x2="400" y2="200" stroke="currentColor" stroke-width="2" />
-          <text x="412" y="175" font-size="8" fill="currentColor" class="opacity-60">Inspected</text>
-          <circle cx="400" cy="250" r="40" fill="none" stroke="currentColor" stroke-width="2" />
-          <text x="400" y="246" text-anchor="middle" font-size="11" fill="currentColor" class="font-bold">TDM-RTR-CORE01</text>
-          <text x="400" y="262" text-anchor="middle" font-size="8" fill="currentColor" class="opacity-70">L3 core · VLAN GW</text>
-          <!-- East-west spokes -->
-          <text x="400" y="292" text-anchor="middle" font-size="9" fill="currentColor" class="opacity-70">East–West (segmented VLANs · ~{{ topology.core_network.total_devices }} endpoints)</text>
-          <line x1="400" y1="250" x2="200" y2="150" stroke="currentColor" stroke-width="2" />
-          <circle cx="200" cy="150" r="25" fill="none" stroke="#22c55e" stroke-width="2" />
-          <text x="200" y="154" text-anchor="middle" font-size="9" fill="currentColor">IT</text>
-          <line x1="400" y1="250" x2="150" y2="350" stroke="currentColor" stroke-width="2" />
-          <circle cx="150" cy="350" r="25" fill="none" stroke="#ef4444" stroke-width="2" />
-          <text x="150" y="354" text-anchor="middle" font-size="9" fill="currentColor">Finance</text>
-          <line x1="400" y1="250" x2="400" y2="450" stroke="currentColor" stroke-width="2" />
-          <circle cx="400" cy="450" r="25" fill="none" stroke="#eab308" stroke-width="2" />
-          <text x="400" y="454" text-anchor="middle" font-size="9" fill="currentColor">HR</text>
-          <line x1="400" y1="250" x2="650" y2="350" stroke="currentColor" stroke-width="2" />
-          <circle cx="650" cy="350" r="25" fill="none" stroke="#22c55e" stroke-width="2" />
-          <text x="650" y="354" text-anchor="middle" font-size="9" fill="currentColor">Admin</text>
-          <line x1="400" y1="250" x2="600" y2="150" stroke="currentColor" stroke-width="2" />
-          <circle cx="600" cy="150" r="25" fill="none" stroke="#ef4444" stroke-width="2" />
-          <text x="600" y="154" text-anchor="middle" font-size="9" fill="currentColor">Smart Infra</text>
-          <text x="200" y="115" text-anchor="middle" font-size="8" fill="muted-foreground">192.168.10.0/24 · V10</text>
-          <text x="95" y="355" text-anchor="middle" font-size="8" fill="muted-foreground">192.168.20.0/24 · V20</text>
-          <text x="400" y="492" text-anchor="middle" font-size="8" fill="muted-foreground">192.168.30.0/24 · V30</text>
-          <text x="705" y="355" text-anchor="middle" font-size="8" fill="muted-foreground">192.168.40.0/24 · V40</text>
-          <text x="600" y="115" text-anchor="middle" font-size="8" fill="muted-foreground">192.168.50.0/24 · V50</text>
+      <div class="flex flex-wrap items-center justify-between gap-2 text-[10px] text-muted-foreground border-t border-border/40 pt-3 mt-1">
+        <span>Drag device blocks freely; link lines and packet animation update automatically.</span>
+        <button type="button" id="topo-reset-layout" class="text-xs px-3 py-1.5 border rounded-md hover:bg-accent shrink-0">Reset layout</button>
+      </div>
+
+      <div class="flex-1 flex items-center justify-center overflow-x-auto">
+        <svg id="topo-lan-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="640" viewBox="0 0 920 640" class="min-w-[880px] max-w-full" aria-label="Logical campus topology with animated traffic">
+          <defs>
+            <pattern id="topo-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+              <path d="M 24 0 L 0 0 0 24" fill="none" stroke="hsl(217.2 32.6% 14%)" stroke-width="0.5"/>
+            </pattern>
+            <filter id="laser-glow" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur stdDeviation="1.6" result="b"/>
+              <feMerge>
+                <feMergeNode in="b"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+            <linearGradient id="grad-ns" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#38bdf8"/>
+              <stop offset="100%" stop-color="#22d3ee"/>
+            </linearGradient>
+            <!-- Motion paths (invisible) — must mirror visible links -->
+            <path id="path-ns-down" d="M 460 54 L 460 68 L 460 114 L 460 128 L 460 176 L 460 198 L 460 314" fill="none"/>
+            <path id="path-ns-up" d="M 460 314 L 460 198 L 460 176 L 460 128 L 460 114 L 460 68 L 460 54" fill="none"/>
+            <path id="path-ew-it" d="M 460 314 Q 280 390 120 448" fill="none"/>
+            <path id="path-ew-fin" d="M 460 314 Q 360 410 280 488" fill="none"/>
+            <path id="path-ew-hr" d="M 460 314 L 460 518" fill="none"/>
+            <path id="path-ew-adm" d="M 460 314 Q 560 410 640 488" fill="none"/>
+            <path id="path-ew-smart" d="M 460 314 Q 640 390 800 448" fill="none"/>
+            <!-- Cross-VLAN east-west sample -->
+            <path id="path-ew-x" d="M 140 498 Q 300 455 460 470 Q 620 455 780 498" fill="none"/>
+          </defs>
+
+          <rect width="100%" height="100%" fill="url(#topo-grid)" opacity="0.45"/>
+          <text x="460" y="14" text-anchor="middle" font-size="10" fill="hsl(215 20.2% 55%)">Layered reference · Internet → Edge → Perimeter FW → Core L3 → departmental VLANs</text>
+
+          <!-- Base links (dim) -->
+          <path class="topo-link-base topo-link-ns" d="M 460 54 L 460 68 L 460 114 L 460 128 L 460 176 L 460 198 L 460 314" stroke="hsl(217.2 32.6% 22%)" stroke-width="5" opacity="0.45"/>
+          <path class="topo-link-base topo-link-ns topo-flow-anim-fwd" d="M 460 54 L 460 68 L 460 114 L 460 128 L 460 176 L 460 198 L 460 314" stroke="url(#grad-ns)" stroke-width="2.2" opacity="0.85"/>
+          <path class="topo-link-base topo-link-ns topo-flow-anim-rev" d="M 460 54 L 460 68 L 460 114 L 460 128 L 460 176 L 460 198 L 460 314" stroke="#67e8f9" stroke-width="1.2" opacity="0.5"/>
+
+          <!-- EW spokes base + pulse -->
+          <g id="ew-links">
+            <path class="topo-link-base topo-link-ew topo-ew-it" d="M 460 314 Q 280 390 120 448" stroke="hsl(217.2 32.6% 22%)" stroke-width="4" opacity="0.4"/>
+            <path class="topo-link-base topo-link-ew topo-ew-it topo-flow-anim-fwd" d="M 460 314 Q 280 390 120 448" stroke="#4ade80" stroke-width="1.8" opacity="0.85"/>
+            <path class="topo-link-base topo-link-ew topo-ew-it topo-flow-anim-rev" d="M 460 314 Q 280 390 120 448" stroke="#86efac" stroke-width="1" opacity="0.45"/>
+
+            <path class="topo-link-base topo-link-ew topo-ew-fin" d="M 460 314 Q 360 410 280 488" stroke="hsl(217.2 32.6% 22%)" stroke-width="3.6" opacity="0.4"/>
+            <path class="topo-link-base topo-link-ew topo-ew-fin topo-flow-anim-fwd" d="M 460 314 Q 360 410 280 488" stroke="#f87171" stroke-width="1.7" opacity="0.85"/>
+            <path class="topo-link-base topo-link-ew topo-ew-fin topo-flow-anim-rev" d="M 460 314 Q 360 410 280 488" stroke="#fca5a5" stroke-width="1" opacity="0.45"/>
+
+            <path class="topo-link-base topo-link-ew topo-ew-hr" d="M 460 314 L 460 518" stroke="hsl(217.2 32.6% 22%)" stroke-width="3.4" opacity="0.4"/>
+            <path class="topo-link-base topo-link-ew topo-ew-hr topo-flow-anim-fwd" d="M 460 314 L 460 518" stroke="#eab308" stroke-width="1.65" opacity="0.85"/>
+            <path class="topo-link-base topo-link-ew topo-ew-hr topo-flow-anim-rev" d="M 460 314 L 460 518" stroke="#fde047" stroke-width="1" opacity="0.45"/>
+
+            <path class="topo-link-base topo-link-ew topo-ew-adm" d="M 460 314 Q 560 410 640 488" stroke="hsl(217.2 32.6% 22%)" stroke-width="3.6" opacity="0.4"/>
+            <path class="topo-link-base topo-link-ew topo-ew-adm topo-flow-anim-fwd" d="M 460 314 Q 560 410 640 488" stroke="#60a5fa" stroke-width="1.65" opacity="0.85"/>
+            <path class="topo-link-base topo-link-ew topo-ew-adm topo-flow-anim-rev" d="M 460 314 Q 560 410 640 488" stroke="#93c5fd" stroke-width="1" opacity="0.45"/>
+
+            <path class="topo-link-base topo-link-ew topo-ew-smart" d="M 460 314 Q 640 390 800 448" stroke="hsl(217.2 32.6% 22%)" stroke-width="4.2" opacity="0.4"/>
+            <path class="topo-link-base topo-link-ew topo-ew-smart topo-flow-anim-fwd" d="M 460 314 Q 640 390 800 448" stroke="#e879f9" stroke-width="1.85" opacity="0.85"/>
+            <path class="topo-link-base topo-link-ew topo-ew-smart topo-flow-anim-rev" d="M 460 314 Q 640 390 800 448" stroke="#f0abfc" stroke-width="1" opacity="0.45"/>
+          </g>
+
+          <!-- Cross-VLAN hairpin (illustrative east-west at L3) -->
+          <path class="topo-link-base topo-link-cross" d="M 140 498 Q 300 455 460 470 Q 620 455 780 498" stroke="hsl(217.2 32.6% 25%)" stroke-width="2" stroke-dasharray="4 6" opacity="0.55"/>
+          <path class="topo-link-base topo-link-cross topo-flow-anim-fwd" d="M 140 498 Q 300 455 460 470 Q 620 455 780 498" stroke="#a78bfa" stroke-width="1.3" opacity="0.75"/>
+          <text x="460" y="438" text-anchor="middle" font-size="9" fill="hsl(215 20.2% 52%)">East–West between segments (routed at core · illustrative)</text>
+
+          <g filter="url(#laser-glow)" style="pointer-events: none">
+            <circle r="3" fill="#7dd3fc"><animateMotion dur="2.1s" repeatCount="indefinite" rotate="auto"><mpath xlink:href="#path-ns-down"/></animateMotion></circle>
+            <circle r="2.5" fill="#bae6fd"><animateMotion dur="2.1s" repeatCount="indefinite" begin="0.52s" rotate="auto"><mpath xlink:href="#path-ns-down"/></animateMotion></circle>
+            <circle r="2.5" fill="#a5f3fc"><animateMotion dur="2.1s" repeatCount="indefinite" begin="1.05s" rotate="auto"><mpath xlink:href="#path-ns-down"/></animateMotion></circle>
+            <circle r="2.8" fill="#67e8f9"><animateMotion dur="2.4s" repeatCount="indefinite" rotate="auto"><mpath xlink:href="#path-ns-up"/></animateMotion></circle>
+            <circle r="2.4" fill="#22d3ee"><animateMotion dur="2.4s" repeatCount="indefinite" begin="0.6s" rotate="auto"><mpath xlink:href="#path-ns-up"/></animateMotion></circle>
+            <circle r="2.4" fill="#4ade80"><animateMotion dur="1.85s" repeatCount="indefinite" rotate="auto"><mpath xlink:href="#path-ew-it"/></animateMotion></circle>
+            <circle r="2" fill="#bbf7d0"><animateMotion dur="1.85s" repeatCount="indefinite" begin="0.55s" rotate="auto"><mpath xlink:href="#path-ew-it"/></animateMotion></circle>
+            <circle r="2.3" fill="#f87171"><animateMotion dur="2s" repeatCount="indefinite" rotate="auto"><mpath xlink:href="#path-ew-fin"/></animateMotion></circle>
+            <circle r="2" fill="#fecaca"><animateMotion dur="2s" repeatCount="indefinite" begin="0.65s" rotate="auto"><mpath xlink:href="#path-ew-fin"/></animateMotion></circle>
+            <circle r="2.2" fill="#facc15"><animateMotion dur="1.7s" repeatCount="indefinite" rotate="auto"><mpath xlink:href="#path-ew-hr"/></animateMotion></circle>
+            <circle r="2.2" fill="#fde047"><animateMotion dur="1.7s" repeatCount="indefinite" begin="0.48s" rotate="auto"><mpath xlink:href="#path-ew-hr"/></animateMotion></circle>
+            <circle r="2.3" fill="#60a5fa"><animateMotion dur="1.95s" repeatCount="indefinite" rotate="auto"><mpath xlink:href="#path-ew-adm"/></animateMotion></circle>
+            <circle r="2" fill="#bfdbfe"><animateMotion dur="1.95s" repeatCount="indefinite" begin="0.58s" rotate="auto"><mpath xlink:href="#path-ew-adm"/></animateMotion></circle>
+            <circle r="2.5" fill="#e879f9"><animateMotion dur="2.05s" repeatCount="indefinite" rotate="auto"><mpath xlink:href="#path-ew-smart"/></animateMotion></circle>
+            <circle r="2" fill="#f5d0fe"><animateMotion dur="2.05s" repeatCount="indefinite" begin="0.62s" rotate="auto"><mpath xlink:href="#path-ew-smart"/></animateMotion></circle>
+            <circle r="2" fill="#c4b5fd"><animateMotion dur="3.2s" repeatCount="indefinite" rotate="auto"><mpath xlink:href="#path-ew-x"/></animateMotion></circle>
+            <circle r="1.8" fill="#ddd6fe"><animateMotion dur="3.2s" repeatCount="indefinite" begin="1.05s" rotate="auto"><mpath xlink:href="#path-ew-x"/></animateMotion></circle>
+          </g>
+
+          <!-- Draggable device nodes (transform translate = position) -->
+          <g class="topo-draggable" data-node="internet" transform="translate(400 18)">
+          <rect class="topo-node-glass" x="0" y="0" width="120" height="36" rx="5"/>
+          <text x="60" y="26" text-anchor="middle" font-size="11" fill="hsl(210 40% 96%)" font-weight="600">Internet / WAN</text>
+          <text x="60" y="38" text-anchor="middle" font-size="8" fill="hsl(215 20.2% 58%)">BGP · ISP / upstream</text>
+          </g>
+
+          <g class="topo-draggable" data-node="edge" transform="translate(340 68)">
+          <rect class="topo-node-glass" x="0" y="0" width="240" height="46" rx="6"/>
+          <text x="120" y="30" text-anchor="middle" font-size="10" fill="hsl(210 40% 96%)" font-weight="600">{{ topology.core_network.edge_hostname }}</text>
+          <text x="120" y="44" text-anchor="middle" font-size="8" fill="hsl(215 20.2% 58%)">Edge · NAT toward campus · uplinks</text>
+          </g>
+
+          <g class="topo-draggable" data-node="firewall" transform="translate(365 128)">
+          <rect class="topo-node-glass" x="0" y="0" width="190" height="48" rx="5"/>
+          <text x="95" y="30" text-anchor="middle" font-size="10" fill="hsl(210 40% 96%)" font-weight="600">{{ topology.core_network.fw_hostname }}</text>
+          <text x="95" y="44" text-anchor="middle" font-size="8" fill="hsl(215 20.2% 58%)">Perimeter / zone-based policy · SSL visibility</text>
+          </g>
+
+          <g class="topo-draggable" data-node="core" transform="translate(320 198)">
+          <rect class="topo-node-glass" x="0" y="0" width="280" height="116" rx="8"/>
+          <text x="140" y="34" text-anchor="middle" font-size="12" fill="hsl(210 40% 96%)" font-weight="700">{{ topology.core_network.core_hostname }}</text>
+          <text x="140" y="52" text-anchor="middle" font-size="9" fill="hsl(215 20.2% 58%)">L3 core · inter-VLAN SVI · OSPF/ static (lab)</text>
+          <text x="140" y="70" text-anchor="middle" font-size="9" fill="#86efac">{{ topology.core_network.core_switch }}</text>
+          <text x="140" y="86" text-anchor="middle" font-size="8" fill="hsl(215 20.2% 52%)">Stack to access switches · {{ topology.core_network.switches | join(", ") }}</text>
+          <text x="140" y="106" text-anchor="middle" font-size="8" fill="hsl(215 20.2% 50%)">VLAN tagging · storm control · SPAN to IDS (see IDS/SIEM pages)</text>
+          </g>
+
+          <g class="topo-draggable" data-node="it" transform="translate(40 448)">
+          <rect class="topo-node-glass" x="0" y="0" width="160" height="100" rx="7"/>
+          <text x="80" y="28" text-anchor="middle" font-size="11" fill="hsl(210 40% 96%)" font-weight="600">IT Dept</text>
+          <text x="80" y="44" text-anchor="middle" font-size="8" font-mono fill="#86efac">192.168.10.0/24 · VLAN 10</text>
+          <text x="80" y="60" text-anchor="middle" font-size="8" fill="hsl(215 20.2% 55%)">Access switch · servers</text>
+          <text x="80" y="82" text-anchor="middle" font-size="7" fill="hsl(215 20.2% 48%)">HTTPS · SSH · SMB · internal DNS</text>
+          </g>
+
+          <g class="topo-draggable" data-node="finance" transform="translate(200 488)">
+          <rect class="topo-node-glass" x="0" y="0" width="160" height="100" rx="7"/>
+          <text x="80" y="28" text-anchor="middle" font-size="11" fill="hsl(210 40% 96%)" font-weight="600">Finance</text>
+          <text x="80" y="44" text-anchor="middle" font-size="8" font-mono fill="#fca5a5">192.168.20.0/24 · VLAN 20</text>
+          <text x="80" y="60" text-anchor="middle" font-size="8" fill="hsl(215 20.2% 55%)">ERP clients · encrypted archive</text>
+          </g>
+
+          <g class="topo-draggable" data-node="hr" transform="translate(380 518)">
+          <rect class="topo-node-glass" x="0" y="0" width="160" height="100" rx="7"/>
+          <text x="80" y="28" text-anchor="middle" font-size="11" fill="hsl(210 40% 96%)" font-weight="600">HR</text>
+          <text x="80" y="44" text-anchor="middle" font-size="8" font-mono fill="#fde047">192.168.30.0/24 · VLAN 30</text>
+          <text x="80" y="60" text-anchor="middle" font-size="8" fill="hsl(215 20.2% 55%)">M365 · HR portals</text>
+          </g>
+
+          <g class="topo-draggable" data-node="admin" transform="translate(560 488)">
+          <rect class="topo-node-glass" x="0" y="0" width="160" height="100" rx="7"/>
+          <text x="80" y="28" text-anchor="middle" font-size="11" fill="hsl(210 40% 96%)" font-weight="600">Administration</text>
+          <text x="80" y="44" text-anchor="middle" font-size="8" font-mono fill="#93c5fd">192.168.40.0/24 · VLAN 40</text>
+          <text x="80" y="60" text-anchor="middle" font-size="8" fill="hsl(215 20.2% 55%)">Active Directory · file shares</text>
+          </g>
+
+          <g class="topo-draggable" data-node="smart" transform="translate(720 448)">
+          <rect class="topo-node-glass" x="0" y="0" width="160" height="100" rx="7"/>
+          <text x="80" y="28" text-anchor="middle" font-size="11" fill="hsl(210 40% 96%)" font-weight="600">Smart Infrastructure</text>
+          <text x="80" y="44" text-anchor="middle" font-size="8" font-mono fill="#f0abfc">192.168.50.0/24 · VLAN 50</text>
+          <text x="80" y="60" text-anchor="middle" font-size="8" fill="hsl(215 20.2% 55%)">IoT · cameras · MQTT brokers</text>
+          <text x="80" y="82" text-anchor="middle" font-size="7" fill="hsl(215 20.2% 48%)">RTSP restricted · IDS/SIEM monitoring</text>
+          </g>
         </svg>
       </div>
+
+      <script src="{{ url_for('static', filename='js/network_topology_drag.js') }}"></script>
+
+      {% if topology.traffic_snapshot %}
+      <div class="mt-4 rounded-lg border bg-muted/20 p-3">
+        <div class="flex flex-wrap justify-between items-baseline gap-2 mb-2">
+          <p class="text-xs font-semibold text-foreground">Traffic snapshot (simulation) — {{ topology.traffic_snapshot.source }}</p>
+          <span class="text-[10px] text-muted-foreground font-mono">{{ topology.traffic_snapshot.generated_at_utc }}</span>
+        </div>
+        <div class="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory">
+          {% for e in topology.traffic_snapshot.edges %}
+          <div class="snap-start shrink-0 rounded-md border border-border bg-card/80 px-3 py-2 min-w-[158px]">
+            <p class="text-[10px] text-muted-foreground leading-snug">{{ e.label }}</p>
+            <p class="text-sm font-mono text-sky-300 mt-1">{{ e.mbps }} Mbps</p>
+            <p class="text-[10px] text-muted-foreground">Util ~{{ e.util_pct }}% · {{ e.pps_k }}k pps</p>
+            {% if e.notes %}<p class="text-[9px] text-muted-foreground/90 mt-1">{{ e.notes }}</p>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
       <div class="mt-4 rounded-lg border bg-muted/30 p-4 text-xs text-muted-foreground">
-        <p class="font-semibold text-foreground mb-2">Typical protocol mix (simulation)</p>
+        <p class="font-semibold text-foreground mb-2">Typical protocol mix (aligned with lab narrative)</p>
         <ul class="list-disc list-inside space-y-1">
-          <li><span class="text-foreground">IT / Admin:</span> HTTPS, SSH, SMB, RDP (restricted at edge), DNS internal.</li>
-          <li><span class="text-foreground">Finance / HR:</span> encrypted SMB, M365-style HTTPS, limited peer-to-peer.</li>
-          <li><span class="text-foreground">Smart Infrastructure:</span> MQTT/CoAP toward controllers, camera RTSP isolated; correlates with IDS/SIEM views in the dashboard.</li>
+          <li><span class="text-foreground">IT / Admin:</span> HTTPS, SSH, SMB, restricted RDP at the edge, internal DNS.</li>
+          <li><span class="text-foreground">Finance &amp; HR:</span> cloud HTTPS, signed SMB, limited peer-to-peer.</li>
+          <li><span class="text-foreground">Smart infrastructure:</span> isolated MQTT/RTSP; alerts forward to IDS/SIEM in this dashboard.</li>
         </ul>
       </div>
-      <div class="absolute bottom-6 right-6 p-4 bg-background/80 border rounded-lg text-xs space-y-2 backdrop-blur max-w-[220px]">
-        <p class="font-bold border-b pb-1 mb-2">Risk overlay (dashboard)</p>
-        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-green-500"></span> Healthy (no critical vulns)</div>
-        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-yellow-500"></span> Caution (medium)</div>
-        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500"></span> High risk (critical)</div>
+      <div class="absolute bottom-6 right-6 p-4 bg-background/85 border rounded-lg text-xs space-y-2 backdrop-blur max-w-[240px]">
+        <p class="font-bold border-b pb-1 mb-2">Risk overlay (CVE view)</p>
+        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-green-500"></span> Healthy</div>
+        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-yellow-500"></span> Caution</div>
+        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500"></span> Critical</div>
       </div>
     </div>
     <div class="space-y-6">
       <div class="rounded-xl border bg-card shadow p-6">
         <h3 class="font-semibold mb-2">{{ topology.city }}</h3>
-        <p class="text-xs text-muted-foreground mb-4">{{ topology.location }} · Core routers: {{ topology.core_network.routers | join(", ") }}</p>
-        <h4 class="text-xs font-bold text-muted-foreground uppercase mb-3">VLANs &amp; segments</h4>
-        <div class="space-y-3 text-sm max-h-[320px] overflow-y-auto pr-1">
+        <p class="text-xs text-muted-foreground mb-4">{{ topology.location }} · Core: {{ topology.core_network.routers | join(", ") }}</p>
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h4 class="text-xs font-bold text-muted-foreground uppercase">VLANs &amp; segments</h4>
+          <button type="button" onclick="openAddDeviceModal()" class="shrink-0 px-3 py-1.5 text-xs font-semibold border rounded-md bg-accent text-accent-foreground hover:opacity-90 transition-opacity" title="إضافة محاكاة لجهاز في أحد أقسام الشبكة">
+            + إضافة جهاز
+          </button>
+        </div>
+        <div class="space-y-3 text-sm max-h-[340px] overflow-y-auto pr-1">
           {% for seg in topology.departments %}
           <div class="p-3 rounded-md bg-muted/50 border">
             <p class="font-bold text-xs text-accent">{{ seg.name }}</p>
@@ -88,13 +278,30 @@
           </div>
           {% endfor %}
         </div>
+        {% if topology.user_added_devices %}
+        <div class="mt-4 pt-4 border-t border-border">
+          <p class="text-xs font-bold text-muted-foreground uppercase mb-2">Your added devices (session)</p>
+          <div class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+            {% for dev in topology.user_added_devices %}
+            <div class="p-2 rounded-md bg-muted/40 border text-xs flex justify-between gap-2 items-start">
+              <div class="min-w-0">
+                <p class="font-mono font-semibold text-foreground truncate">{{ dev.hostname }}</p>
+                <p class="text-muted-foreground mt-0.5">{{ dev.department }} · <span class="font-mono">{{ dev.device_type }}</span></p>
+                <p class="text-[10px] font-mono text-sky-300/90 mt-0.5">{{ dev.ip_address }}</p>
+              </div>
+              <button type="button" onclick="removeLabDevice('{{ dev.id }}')" class="shrink-0 px-1.5 py-0.5 rounded border text-muted-foreground hover:bg-destructive/20 hover:text-destructive hover:border-destructive/40 transition-colors" title="إزالة">×</button>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
       </div>
       <div class="rounded-xl border bg-card shadow p-6">
-        <h3 class="font-semibold mb-4">Security controls (narrative)</h3>
+        <h3 class="font-semibold mb-4">Security controls (policy narrative)</h3>
         <ul class="space-y-3 text-sm text-muted-foreground">
-          <li><span class="text-foreground font-medium">IT:</span> server segment access; external RDP blocked by default.</li>
-          <li><span class="text-foreground font-medium">Smart Infra:</span> isolated VLAN; MQTT only to designated brokers.</li>
-          <li><span class="text-foreground font-medium">Finance:</span> strict RBAC; SMB signing / encryption enforced in policy view.</li>
+          <li><span class="text-foreground font-medium">IT:</span> server-segment access; inbound RDP blocked by default.</li>
+          <li><span class="text-foreground font-medium">Smart infra:</span> isolated VLAN; MQTT only to designated brokers.</li>
+          <li><span class="text-foreground font-medium">Finance:</span> strict RBAC; SMB signing in policy.</li>
         </ul>
       </div>
     </div>
@@ -105,53 +312,71 @@
 <div id="topo-flows" class="hidden">
   <div class="grid gap-6 lg:grid-cols-2">
     <div class="rounded-xl border bg-card shadow p-6 space-y-4">
-      <h3 class="font-semibold">Simulated LAN: where events “move”</h3>
-      <p class="text-sm text-muted-foreground">Security events, PCAP samples, and SIEM-style logs in this project <span class="text-foreground">represent</span> traffic that would traverse the paths shown in <em>Logical LAN</em>: source IP → routed path → destination host in a VLAN. IDS and firewall pages apply policy checks on those logical paths.</p>
+      <h3 class="font-semibold">Simulated LAN: where events flow</h3>
+      <p class="text-sm text-muted-foreground">Security events, PCAP samples, and SIEM-style logs in this project <span class="text-foreground">represent</span> traffic on the paths shown under <em>Logical LAN</em>: source IP → routed path → host in a VLAN. Firewall and IDS pages apply policy on those same logical paths.</p>
       <ol class="text-sm text-muted-foreground list-decimal list-inside space-y-2">
-        <li><span class="text-foreground">External → DMZ / edge:</span> scanning and phishing-style events (threat intel, geo map) feed from <span class="font-mono text-xs">SecurityEvent</span> seed data.</li>
-        <li><span class="text-foreground">Lateral:</span> host-to-host within or across VLANs appears in traffic analysis (Wireshark CSV) and exploit lab views as <span class="italic">illustrative</span> records.</li>
-        <li><span class="text-foreground">Real Nmap:</span> when enabled, probes leave the machine running Flask toward the target CIDR you provide — this is separate from the 200 simulated assets.</li>
+        <li><span class="text-foreground">External → edge:</span> scan and phishing-style events from Threat Intel and the map.</li>
+        <li><span class="text-foreground">Lateral:</span> cross-VLAN sessions in traffic analysis (Wireshark) and exploit labs as illustrative records.</li>
+        <li><span class="text-foreground">Real Nmap:</span> when enabled, packets leave the Flask host toward your CIDR — separate from the ~200 simulated assets.</li>
       </ol>
     </div>
     <div class="rounded-xl border bg-card shadow p-6 space-y-4">
-      <h3 class="font-semibold">This dashboard in the browser (HTTP)</h3>
-      <p class="text-sm text-muted-foreground">Opening any page sends HTML from Flask. Interactive widgets issue <span class="font-mono text-xs">fetch("/api/v1/…")</span> on the same origin; Flask-Login uses the session cookie for <span class="font-mono text-xs">GET/POST</span> to the API.</p>
-      <svg viewBox="0 0 420 200" class="w-full max-h-[220px] text-foreground" aria-label="Application request flow">
+      <h3 class="font-semibold">Application flow (browser ↔ Flask)</h3>
+      <p class="text-sm text-muted-foreground">Each HTML page is served by Flask; Chart.js widgets call <span class="font-mono text-xs">fetch("/api/v1/…")</span> on the same origin; sessions use the Flask-Login cookie.</p>
+      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 520 220" class="w-full max-h-[260px]" aria-label="HTTP and API traffic flow">
         <defs>
-          <marker id="flow-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-            <path d="M0,0 L6,3 L0,6 z" fill="currentColor" />
-          </marker>
+          <path id="path-app-req" d="M 108 110 L 150 110 L 150 72" fill="none"/>
+          <path id="path-app-db" d="M 232 72 L 300 72" fill="none"/>
+          <path id="path-app-nmap" d="M 232 110 L 300 110" fill="none"/>
+          <path id="path-app-ext" d="M 232 148 L 300 148" fill="none"/>
+          <path id="path-app-resp" d="M 300 72 L 232 72 L 150 72 L 150 110 L 108 110" fill="none"/>
+          <filter id="app-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="1.2" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
         </defs>
-        <rect x="20" y="70" width="88" height="56" rx="6" fill="none" stroke="currentColor" stroke-width="1.5" />
-        <text x="64" y="98" text-anchor="middle" font-size="11" fill="currentColor">Browser</text>
-        <text x="64" y="114" text-anchor="middle" font-size="8" fill="currentColor" class="opacity-70">Chart.js / fetch</text>
-        <path d="M 108 98 L 158 98" stroke="currentColor" stroke-width="1.5" marker-end="url(#flow-arr)" />
-        <text x="133" y="88" text-anchor="middle" font-size="8" fill="currentColor">HTTPS or HTTP</text>
-        <text x="133" y="108" text-anchor="middle" font-size="7" fill="currentColor" class="opacity-60">session cookie</text>
-        <rect x="158" y="58" width="110" height="84" rx="6" fill="none" stroke="currentColor" stroke-width="2" />
-        <text x="213" y="82" text-anchor="middle" font-size="12" fill="currentColor" class="font-bold">Flask</text>
-        <text x="213" y="98" text-anchor="middle" font-size="9" fill="currentColor">:5000 default</text>
-        <text x="213" y="116" text-anchor="middle" font-size="8" fill="currentColor" class="opacity-70">Jinja + /api/v1</text>
-        <path d="M 268 78 L 318 38" stroke="currentColor" stroke-width="1.2" marker-end="url(#flow-arr)" />
-        <path d="M 268 98 L 318 98" stroke="currentColor" stroke-width="1.2" marker-end="url(#flow-arr)" />
-        <path d="M 268 118 L 318 158" stroke="currentColor" stroke-width="1.2" marker-end="url(#flow-arr)" />
-        <rect x="318" y="20" width="82" height="36" rx="4" fill="none" stroke="currentColor" stroke-width="1" />
-        <text x="359" y="36" text-anchor="middle" font-size="8" fill="currentColor">SQLite / Postgres</text>
-        <text x="359" y="48" text-anchor="middle" font-size="7" fill="currentColor" class="opacity-60">ORM queries</text>
-        <rect x="318" y="78" width="82" height="36" rx="4" fill="none" stroke="currentColor" stroke-width="1" />
-        <text x="359" y="94" text-anchor="middle" font-size="8" fill="currentColor">Nmap subprocess</text>
-        <text x="359" y="106" text-anchor="middle" font-size="7" fill="currentColor" class="opacity-60">optional real scan</text>
-        <rect x="318" y="136" width="82" height="44" rx="4" fill="none" stroke="currentColor" stroke-width="1" />
-        <text x="359" y="154" text-anchor="middle" font-size="8" fill="currentColor">External</text>
-        <text x="359" y="168" text-anchor="middle" font-size="7" fill="currentColor" class="opacity-60">map tiles only</text>
+        <rect x="8" y="78" width="100" height="64" rx="8" class="topo-node-glass"/>
+        <text x="58" y="102" text-anchor="middle" font-size="11" fill="hsl(210 40% 96%)">Browser</text>
+        <text x="58" y="118" text-anchor="middle" font-size="8" fill="hsl(215 20.2% 58%)">Chart.js · fetch</text>
+        <rect x="150" y="44" width="120" height="136" rx="8" fill="none" stroke="hsl(217.2 32.6% 35%)" stroke-width="2"/>
+        <text x="210" y="68" text-anchor="middle" font-size="13" fill="hsl(210 40% 96%)" font-weight="700">Flask :5000</text>
+        <text x="210" y="86" text-anchor="middle" font-size="8" fill="hsl(215 20.2% 58%)">Jinja · Blueprints</text>
+        <text x="210" y="118" text-anchor="middle" font-size="8" fill="hsl(215 20.2% 58%)">REST /api/v1 + Session cookie</text>
+        <rect x="300" y="52" width="100" height="40" rx="5" class="topo-node-glass"/>
+        <text x="350" y="72" text-anchor="middle" font-size="9" fill="hsl(210 40% 96%)">SQLite / PG</text>
+        <rect x="300" y="98" width="100" height="36" rx="5" class="topo-node-glass"/>
+        <text x="350" y="118" text-anchor="middle" font-size="9" fill="hsl(210 40% 96%)">Nmap subprocess</text>
+        <rect x="300" y="140" width="100" height="44" rx="5" class="topo-node-glass"/>
+        <text x="350" y="160" text-anchor="middle" font-size="9" fill="hsl(210 40% 96%)">Maps / external</text>
+        <text x="350" y="174" text-anchor="middle" font-size="7" fill="hsl(215 20.2% 50%)">Carto tiles only</text>
+
+        <path d="M 108 110 L 150 110 L 150 72 L 232 72" fill="none" stroke="hsl(217.2 32.6% 25%)" stroke-width="4" opacity="0.35"/>
+        <path d="M 108 110 L 150 110 L 150 72 L 232 72" fill="none" stroke="#38bdf8" stroke-width="1.5" class="topo-flow-anim-fwd" opacity="0.9"/>
+        <path d="M 232 72 L 300 72" fill="none" stroke="#34d399" stroke-width="1.4" class="topo-flow-anim-fwd" opacity="0.85"/>
+        <path d="M 232 110 L 300 110" fill="none" stroke="#fbbf24" stroke-width="1.4" class="topo-flow-anim-fwd" opacity="0.85"/>
+        <path d="M 232 148 L 300 148" fill="none" stroke="#a78bfa" stroke-width="1.3" class="topo-flow-anim-fwd" opacity="0.8"/>
+        <path d="M 300 72 L 232 72 L 150 72 L 150 110 L 108 110" fill="none" stroke="#22d3ee" stroke-width="1.2" stroke-dasharray="4 10" class="topo-flow-anim-rev" opacity="0.55"/>
+
+        <g filter="url(#app-glow)">
+          <circle r="2.5" fill="#7dd3fc"><animateMotion dur="1.6s" repeatCount="indefinite" rotate="auto"><mpath xlink:href="#path-app-req"/></animateMotion></circle>
+          <circle r="2" fill="#6ee7b7"><animateMotion dur="0.8s" repeatCount="indefinite" rotate="auto"><mpath xlink:href="#path-app-db"/></animateMotion></circle>
+          <circle r="2" fill="#fbbf24"><animateMotion dur="0.95s" repeatCount="indefinite" rotate="auto"><mpath xlink:href="#path-app-nmap"/></animateMotion></circle>
+          <circle r="2" fill="#c4b5fd"><animateMotion dur="1.1s" repeatCount="indefinite" rotate="auto"><mpath xlink:href="#path-app-ext"/></animateMotion></circle>
+          <circle r="2.2" fill="#bae6fd"><animateMotion dur="2s" repeatCount="indefinite" begin="0.3s" rotate="auto"><mpath xlink:href="#path-app-resp"/></animateMotion></circle>
+        </g>
+        <text x="120" y="100" font-size="8" fill="hsl(215 20.2% 58%)">HTML / API request</text>
+        <text x="255" y="64" font-size="8" fill="hsl(215 20.2% 58%)">ORM</text>
+        <text x="248" y="102" font-size="8" fill="hsl(215 20.2% 58%)">Scan</text>
+        <text x="248" y="142" font-size="8" fill="hsl(215 20.2% 58%)">Tiles</text>
+        <text x="108" y="128" font-size="8" fill="hsl(215 20.2% 52%)">JSON / HTML response</text>
       </svg>
-      <p class="text-xs text-muted-foreground">Attack map: browser loads Carto basemap tiles (GET); event coordinates are computed server-side — no SIEM payloads are sent to the tile CDN.</p>
+      <p class="text-xs text-muted-foreground">Attack map: the browser loads Carto basemap tiles (GET); coordinates are computed server-side — no SIEM payloads are sent to the tile CDN.</p>
     </div>
   </div>
   <div class="rounded-xl border bg-card shadow overflow-hidden mt-6">
     <div class="p-4 border-b">
       <h3 class="font-semibold text-sm">Primary <span class="font-mono">/api/v1</span> flows (authenticated)</h3>
-      <p class="text-xs text-muted-foreground mt-1">Grouped by UI area; same-origin only in default deployment.</p>
+      <p class="text-xs text-muted-foreground mt-1">Same-origin in default deployment.</p>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-xs">
@@ -167,12 +392,12 @@
           <tr class="border-b"><td class="py-2 px-4 text-foreground">Dashboard</td><td class="py-2 px-4 font-mono">GET /api/v1/charts/{severity_distribution,department_vulns,trend}</td><td class="py-2 px-4">Chart.js datasets</td></tr>
           <tr class="border-b"><td class="py-2 px-4 text-foreground">Dashboard</td><td class="py-2 px-4 font-mono">GET /api/v1/dashboard/top-critical-devices</td><td class="py-2 px-4">Risk table</td></tr>
           <tr class="border-b"><td class="py-2 px-4 text-foreground">Dashboard</td><td class="py-2 px-4 font-mono">GET /api/v1/dashboard/recent-alerts</td><td class="py-2 px-4">Alert strip / widgets</td></tr>
-          <tr class="border-b"><td class="py-2 px-4 text-foreground">Attacks</td><td class="py-2 px-4 font-mono">GET /api/v1/attacks/geo|killchain|timeline|recent</td><td class="py-2 px-4">Map, MITRE heatmap, timeline, table</td></tr>
-          <tr class="border-b"><td class="py-2 px-4 text-foreground">Real scan</td><td class="py-2 px-4 font-mono">GET /api/v1/scan/network-info · GET /scan/status · GET /scan/results</td><td class="py-2 px-4">Detect CIDR, progress, output</td></tr>
-          <tr class="border-b"><td class="py-2 px-4 text-foreground">Real scan</td><td class="py-2 px-4 font-mono">POST /api/v1/scan/start</td><td class="py-2 px-4">Launch Nmap (RBAC: admin, network_admin, security_analyst)</td></tr>
+          <tr class="border-b"><td class="py-2 px-4 text-foreground">Attacks</td><td class="py-2 px-4 font-mono">GET /api/v1/attacks/geo|killchain|timeline|recent</td><td class="py-2 px-4">Map, MITRE heatmap, timeline</td></tr>
+          <tr class="border-b"><td class="py-2 px-4 text-foreground">Real scan</td><td class="py-2 px-4 font-mono">GET /api/v1/scan/network-info · …</td><td class="py-2 px-4">CIDR, scan status</td></tr>
+          <tr class="border-b"><td class="py-2 px-4 text-foreground">Real scan</td><td class="py-2 px-4 font-mono">POST /api/v1/scan/start</td><td class="py-2 px-4">Launch Nmap</td></tr>
           <tr class="border-b"><td class="py-2 px-4 text-foreground">Catalog</td><td class="py-2 px-4 font-mono">GET /api/v1/devices · /vulnerabilities · /alerts</td><td class="py-2 px-4">Lists and filters</td></tr>
           <tr class="border-b"><td class="py-2 px-4 text-foreground">Compliance / AI</td><td class="py-2 px-4 font-mono">GET /api/v1/compliance/score · /api/v1/ai/predict</td><td class="py-2 px-4">Scores and ML demo</td></tr>
-          <tr class="border-b"><td class="py-2 px-4 text-foreground">GNS3 (sim)</td><td class="py-2 px-4 font-mono">GET /api/v1/gns3/status</td><td class="py-2 px-4">Optional JSON status for lab integration</td></tr>
+          <tr class="border-b"><td class="py-2 px-4 text-foreground">GNS3 (sim)</td><td class="py-2 px-4 font-mono">GET /api/v1/gns3/status</td><td class="py-2 px-4">Lab integration</td></tr>
         </tbody>
       </table>
     </div>
@@ -269,9 +494,53 @@ curl -X POST http://localhost:3080/v2/projects/{{ gns3.project_id }}/nodes/stop<
       <div>
         <p class="text-xs font-bold text-muted-foreground uppercase mb-2">Import Project</p>
         <pre class="bg-black text-green-400 font-mono text-xs p-3 rounded-lg overflow-x-auto">curl -X POST http://localhost:3080/v2/projects/import \
-  -F "file=@tadamun_lab.gns3project"</pre>
+  -F "file=@soc_lab.gns3project"</pre>
       </div>
     </div>
+  </div>
+</div>
+
+<div id="add-device-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="add-device-title" onclick="if (event.target === this) closeAddDeviceModal()">
+  <div class="bg-card border rounded-xl shadow-xl max-w-md w-full p-6 relative" onclick="event.stopPropagation()">
+    <button type="button" onclick="closeAddDeviceModal()" class="absolute top-3 end-3 text-muted-foreground hover:text-foreground text-xl leading-none w-8 h-8 flex items-center justify-center rounded-md hover:bg-muted" aria-label="إغلاق">×</button>
+    <h3 id="add-device-title" class="text-lg font-semibold mb-1">إضافة جهاز إلى الشبكة</h3>
+    <p class="text-xs text-muted-foreground mb-4">محاكاة للمعمل — يُخزَّن في الجلسة فقط (حتى إغلاق المتصفح).</p>
+    <form id="add-device-form" class="space-y-3" onsubmit="submitAddDevice(event)">
+      <div>
+        <label class="text-xs font-medium text-foreground" for="lab-hostname">اسم المضيف <span class="text-muted-foreground font-normal">(اختياري)</span></label>
+        <input id="lab-hostname" name="hostname" type="text" class="w-full mt-1 px-3 py-2 text-sm rounded-md border border-input bg-background" placeholder="مثال: TDM-WEB-02" autocomplete="off" />
+      </div>
+      <div>
+        <label class="text-xs font-medium text-foreground" for="lab-dept">القسم / VLAN</label>
+        <select id="lab-dept" name="department" required class="w-full mt-1 px-3 py-2 text-sm rounded-md border border-input bg-background">
+          {% for seg in topology.departments %}
+          <option value="{{ seg.name }}">{{ seg.name }} — {{ seg.subnet }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="text-xs font-medium text-foreground" for="lab-type">نوع الجهاز</label>
+        <select id="lab-type" name="device_type" class="w-full mt-1 px-3 py-2 text-sm rounded-md border border-input bg-background">
+          <option value="workstation">workstation</option>
+          <option value="server">server</option>
+          <option value="router">router</option>
+          <option value="switch">switch</option>
+          <option value="firewall">firewall</option>
+          <option value="ids">ids</option>
+          <option value="printer">printer</option>
+          <option value="controller">controller</option>
+          <option value="iot_sensor">iot_sensor</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs font-medium text-foreground" for="lab-ip">عنوان IP <span class="text-muted-foreground font-normal">(اختياري — يُولَّد تلقائياً)</span></label>
+        <input id="lab-ip" name="ip_address" type="text" class="w-full mt-1 px-3 py-2 text-sm rounded-md border border-input bg-background font-mono" placeholder="192.168.10.x" autocomplete="off" />
+      </div>
+      <div class="flex gap-2 pt-2">
+        <button type="submit" class="flex-1 px-4 py-2 text-sm font-semibold rounded-md bg-accent text-accent-foreground border border-transparent hover:opacity-90">حفظ الجهاز</button>
+        <button type="button" onclick="closeAddDeviceModal()" class="px-4 py-2 text-sm rounded-md border hover:bg-muted transition-colors">إلغاء</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -304,8 +573,60 @@ function exportGns3Project() {
   const blob = new Blob([JSON.stringify(project, null, 2)], {type: 'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'tadamun_lab.gns3project';
+  a.download = 'soc_lab.gns3project';
   a.click();
+}
+
+const TOPO_ADD_DEVICE_URL = "{{ url_for('security_tools.network_topology_add_device') }}";
+const TOPO_REMOVE_DEVICE_TMPL = "{{ url_for('security_tools.network_topology_remove_device', device_id='__DEVICE_ID__') }}";
+
+function openAddDeviceModal() {
+  var m = document.getElementById('add-device-modal');
+  if (m) { m.classList.remove('hidden'); document.getElementById('lab-hostname')?.focus(); }
+}
+function closeAddDeviceModal() {
+  var m = document.getElementById('add-device-modal');
+  if (m) m.classList.add('hidden');
+}
+async function submitAddDevice(ev) {
+  ev.preventDefault();
+  var form = ev.target;
+  var body = {
+    hostname: (form.hostname && form.hostname.value) ? form.hostname.value.trim() : '',
+    department: form.department.value,
+    device_type: form.device_type.value,
+    ip_address: (form.ip_address && form.ip_address.value) ? form.ip_address.value.trim() : ''
+  };
+  try {
+    var r = await fetch(TOPO_ADD_DEVICE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    var data = await r.json();
+    if (data.ok) {
+      window.location.reload();
+      return;
+    }
+    alert(data.error || 'تعذّر إضافة الجهاز');
+  } catch (e) {
+    alert('خطأ في الاتصال بالخادم');
+  }
+}
+async function removeLabDevice(id) {
+  if (!id || !confirm('إزالة هذا الجهاز من قائمة المحاكاة؟')) return;
+  var url = TOPO_REMOVE_DEVICE_TMPL.replace('__DEVICE_ID__', encodeURIComponent(id));
+  try {
+    var r = await fetch(url, { method: 'DELETE', headers: { 'Accept': 'application/json' } });
+    var data = await r.json();
+    if (data.ok) {
+      window.location.reload();
+      return;
+    }
+    alert(data.error || 'تعذّر الحذف');
+  } catch (e) {
+    alert('خطأ في الاتصال بالخادم');
+  }
 }
 </script>
 {% endblock %}

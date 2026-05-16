@@ -1,8 +1,8 @@
 - Nikto v2.1.6/2.1.5
 + Target IP:          192.168.10.20
-+ Target Hostname:    tdm-web-01.tadamun.local
++ Target Hostname:    tdm-web-01.corp.local
 + Target Port:        443
-+ SSL Info:           Subject: /CN=tadamun.gov.om
++ SSL Info:           Subject: /CN=example.org
                       Ciphers: TLS_AES_256_GCM_SHA384
                       Issuer: /CN=DigiCert SHA2 Extended Validation
 + Start Time:         2026-04-10 06:00:00 (GMT+4)

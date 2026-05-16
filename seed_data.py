@@ -139,14 +139,14 @@ def seed():
         Path("ml_models").mkdir(exist_ok=True)
         synthetic_dataset()
         train_and_compare("data/cve_dataset.csv", "ml_models/vulnerability_model.pkl")
-        save_topology("data/tadamun_network.json")
+        save_topology("data/lab_network.json")
 
         # Seed Users
         users = [
-            ("admin", "admin@tadamun.om", "admin", "admin"),
-            ("analyst", "analyst@tadamun.om", "analyst123", "security_analyst"),
-            ("netadmin", "netadmin@tadamun.om", "netadmin123", "network_admin"),
-            ("viewer", "viewer@tadamun.om", "viewer123", "viewer"),
+            ("admin", "admin@lab.example.org", "admin", "admin"),
+            ("analyst", "analyst@lab.example.org", "analyst123", "security_analyst"),
+            ("netadmin", "netadmin@lab.example.org", "netadmin123", "network_admin"),
+            ("viewer", "viewer@lab.example.org", "viewer123", "viewer"),
         ]
         for username, email, password, role in users:
             u = User(username=username, email=email, role=role)
@@ -302,7 +302,7 @@ def seed():
                 source_ip=f"203.0.{random.randint(100, 200)}.{random.randint(1, 254)}",
                 dest_ip=device.ip_address,
                 message=message,
-                raw_log=f"CEF:0|Tadamun|SOC|1.0|{i}|{event_type}|{severity.upper()}|src={device.ip_address}",
+                raw_log=f"CEF:0|CorpSOC|Dashboard|1.0|{i}|{event_type}|{severity.upper()}|src={device.ip_address}",
                 device=device
             ))
 
@@ -348,7 +348,7 @@ def seed():
         _INCIDENTS = [
             {
                 "incident_id": "INC-2026-0001",
-                "title": "Log4Shell RCE Exploitation — Tadamun App Server",
+                "title": "Log4Shell RCE Exploitation — internal app server",
                 "severity": "critical",
                 "status": "investigating",
                 "assigned_to": "analyst",
@@ -447,7 +447,7 @@ def seed():
                 "assigned_to": "analyst",
                 "description": "DLP alert: HR manager account (maryam.alhashmi) uploaded 2.4 GB archive to personal Google Drive at 02:14 AM. Archive appears to contain employee records (HRMS export). Access at unusual hours suggests malicious intent.",
                 "timeline": [
-                    {"time": "2026-04-08 02:14:22", "actor": "DLP System", "action": "Alert: Large HTTPS upload to drive.google.com from hr.tadamun.local"},
+                    {"time": "2026-04-08 02:14:22", "actor": "DLP System", "action": "Alert: Large HTTPS upload to drive.google.com from hr.corp.local"},
                     {"time": "2026-04-08 02:15:00", "actor": "SIEM", "action": "Correlated with after-hours user activity (outside policy window 08:00-18:00)"},
                     {"time": "2026-04-08 08:00:00", "actor": "analyst", "action": "Incident reviewed — HR manager account suspended pending investigation"},
                     {"time": "2026-04-09 14:00:00", "actor": "Legal", "action": "Confirmed malicious intent — employee terminated, police report filed"},
@@ -514,16 +514,16 @@ def seed():
                 "assigned_to": "netadmin",
                 "description": "DNS server (192.168.10.5) allowing AXFR zone transfers to any host. Complete internal DNS zone retrieved by external scanner including all 200+ hostnames and internal IP mappings.",
                 "timeline": [
-                    {"time": "2026-04-09 03:00:00", "actor": "OpenVAS GVM", "action": "Detected: AXFR zone transfer allowed for tadamun.local zone"},
+                    {"time": "2026-04-09 03:00:00", "actor": "OpenVAS GVM", "action": "Detected: AXFR zone transfer allowed for corp.local zone"},
                     {"time": "2026-04-09 08:00:00", "actor": "netadmin", "action": "BIND9 ACL configured: allow-transfer { none; }"},
                     {"time": "2026-04-09 08:30:00", "actor": "netadmin", "action": "Verified fix — zone transfer now blocked. Incident resolved."},
                 ],
                 "iocs": [
                     {"type": "IP", "value": "192.168.10.5", "description": "DNS server (TDM-DNS-01)"},
-                    {"type": "Data", "value": "tadamun.local zone (214 records)", "description": "Disclosed internal DNS records"},
+                    {"type": "Data", "value": "corp.local zone (214 records)", "description": "Disclosed internal DNS records"},
                 ],
                 "evidence": [
-                    {"type": "DNS Dump", "name": "tadamun.local-axfr-dump.txt", "size": "48 KB", "hash": "a3f3e7f44f17c61e2d4d5b2c10e9f872bd45f0e1c7d2a9b3e8c5d7e1f0a2b4c6", "collected": "2026-04-09 03:05:00"},
+                    {"type": "DNS Dump", "name": "corp.local-axfr-dump.txt", "size": "48 KB", "hash": "a3f3e7f44f17c61e2d4d5b2c10e9f872bd45f0e1c7d2a9b3e8c5d7e1f0a2b4c6", "collected": "2026-04-09 03:05:00"},
                 ],
                 "recommended_actions": "RESOLVED: Applied BIND9 ACL. Monitor for unauthorized zone transfer attempts going forward.",
             },
@@ -564,9 +564,9 @@ def seed():
                     {"time": "2026-04-08 09:00:00", "actor": "analyst", "action": "No breach confirmed (MFA held) — incident resolved"},
                 ],
                 "iocs": [
-                    {"type": "Domain", "value": "tadamun-cfo.com", "description": "Phishing domain (lookalike)"},
-                    {"type": "Email", "value": "cfo@tadamun-cfo.com", "description": "Sender address (spoofed CFO)"},
-                    {"type": "URL", "value": "https://tadamun-cfo.com/login", "description": "Credential harvest page"},
+                    {"type": "Domain", "value": "acme-cfo.com", "description": "Phishing domain (lookalike)"},
+                    {"type": "Email", "value": "cfo@acme-cfo.com", "description": "Sender address (spoofed CFO)"},
+                    {"type": "URL", "value": "https://acme-cfo.com/login", "description": "Credential harvest page"},
                 ],
                 "evidence": [
                     {"type": "Email Headers", "name": "phishing-email-sample.eml", "size": "28 KB", "hash": "84c82835a5d21bbcf75a61706d8ab549c41b8fd", "collected": "2026-04-07 09:25:00"},
