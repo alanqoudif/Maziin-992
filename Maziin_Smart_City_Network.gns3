@@ -1,0 +1,389 @@
+{
+  "version": "2.2.42",
+  "project_id": "8eb5e96e-7e08-4eb3-aff8-2e0f07f6a5c7",
+  "project_name": "Maziin Smart City Network",
+  "project_type": "GNS3 project",
+  "topology": {
+    "nodes": [
+      {
+        "node_id": "wan-pe",
+        "name": "WAN-ISP",
+        "node_type": "router",
+        "compute_id": "local",
+        "symbol": ":/symbols/multilayer_switch.svg",
+        "x": 50,
+        "y": 50,
+        "properties": {
+          "name": "WAN-ISP",
+          "description": "ISP Peering Point (BGP)",
+          "ip": "203.0.113.1"
+        }
+      },
+      {
+        "node_id": "edge-router",
+        "name": "TDM-RTR-EDGE01",
+        "node_type": "router",
+        "compute_id": "local",
+        "symbol": ":/symbols/router.svg",
+        "x": 200,
+        "y": 50,
+        "properties": {
+          "name": "TDM-RTR-EDGE01",
+          "description": "Edge Router - WAN Gateway",
+          "ip": "192.168.0.1"
+        }
+      },
+      {
+        "node_id": "firewall",
+        "name": "TDM-FW-PER01",
+        "node_type": "firewall",
+        "compute_id": "local",
+        "symbol": ":/symbols/firewall.svg",
+        "x": 350,
+        "y": 50,
+        "properties": {
+          "name": "TDM-FW-PER01",
+          "description": "Perimeter Firewall (ASA/FTD)",
+          "ip": "192.168.0.2"
+        }
+      },
+      {
+        "node_id": "core-router",
+        "name": "TDM-RTR-CORE01",
+        "node_type": "router",
+        "compute_id": "local",
+        "symbol": ":/symbols/router.svg",
+        "x": 500,
+        "y": 50,
+        "properties": {
+          "name": "TDM-RTR-CORE01",
+          "description": "Core Router",
+          "ip": "192.168.1.1"
+        }
+      },
+      {
+        "node_id": "core-switch",
+        "name": "TDM-SW-CORE01",
+        "node_type": "switch",
+        "compute_id": "local",
+        "symbol": ":/symbols/multilayer_switch.svg",
+        "x": 500,
+        "y": 200,
+        "properties": {
+          "name": "TDM-SW-CORE01",
+          "description": "Core Switch - Distribution Layer"
+        }
+      },
+      {
+        "node_id": "acc-switch-1",
+        "name": "TDM-SW-ACC01",
+        "node_type": "switch",
+        "compute_id": "local",
+        "symbol": ":/symbols/switch.svg",
+        "x": 300,
+        "y": 350,
+        "properties": {
+          "name": "TDM-SW-ACC01",
+          "description": "Access Switch - VLAN 10 & 20"
+        }
+      },
+      {
+        "node_id": "acc-switch-2",
+        "name": "TDM-SW-ACC02",
+        "node_type": "switch",
+        "compute_id": "local",
+        "symbol": ":/symbols/switch.svg",
+        "x": 500,
+        "y": 350,
+        "properties": {
+          "name": "TDM-SW-ACC02",
+          "description": "Access Switch - VLAN 30 & 40"
+        }
+      },
+      {
+        "node_id": "acc-switch-3",
+        "name": "TDM-SW-ACC03",
+        "node_type": "switch",
+        "compute_id": "local",
+        "symbol": ":/symbols/switch.svg",
+        "x": 700,
+        "y": 350,
+        "properties": {
+          "name": "TDM-SW-ACC03",
+          "description": "Access Switch - VLAN 50 (Smart Infrastructure)"
+        }
+      },
+      {
+        "node_id": "vlan10-it",
+        "name": "VLAN10-IT",
+        "node_type": "cloud",
+        "compute_id": "local",
+        "symbol": ":/symbols/cloud.svg",
+        "x": 200,
+        "y": 500,
+        "properties": {
+          "name": "IT Department",
+          "description": "VLAN 10 - 192.168.10.0/24 (45 devices)",
+          "subnet": "192.168.10.0/24"
+        }
+      },
+      {
+        "node_id": "vlan20-finance",
+        "name": "VLAN20-Finance",
+        "node_type": "cloud",
+        "compute_id": "local",
+        "symbol": ":/symbols/cloud.svg",
+        "x": 350,
+        "y": 500,
+        "properties": {
+          "name": "Finance Department",
+          "description": "VLAN 20 - 192.168.20.0/24 (42 devices)",
+          "subnet": "192.168.20.0/24"
+        }
+      },
+      {
+        "node_id": "vlan30-hr",
+        "name": "VLAN30-HR",
+        "node_type": "cloud",
+        "compute_id": "local",
+        "symbol": ":/symbols/cloud.svg",
+        "x": 500,
+        "y": 500,
+        "properties": {
+          "name": "HR Department",
+          "description": "VLAN 30 - 192.168.30.0/24 (36 devices)",
+          "subnet": "192.168.30.0/24"
+        }
+      },
+      {
+        "node_id": "vlan40-admin",
+        "name": "VLAN40-Admin",
+        "node_type": "cloud",
+        "compute_id": "local",
+        "symbol": ":/symbols/cloud.svg",
+        "x": 650,
+        "y": 500,
+        "properties": {
+          "name": "Administration",
+          "description": "VLAN 40 - 192.168.40.0/24 (30 devices)",
+          "subnet": "192.168.40.0/24"
+        }
+      },
+      {
+        "node_id": "vlan50-smart",
+        "name": "VLAN50-Smart",
+        "node_type": "cloud",
+        "compute_id": "local",
+        "symbol": ":/symbols/cloud.svg",
+        "x": 800,
+        "y": 500,
+        "properties": {
+          "name": "Smart Infrastructure",
+          "description": "VLAN 50 - 192.168.50.0/24 (47 devices)",
+          "subnet": "192.168.50.0/24"
+        }
+      }
+    ],
+    "links": [
+      {
+        "link_id": "wan-edge",
+        "source": {
+          "node_id": "wan-pe",
+          "adapter_number": 0,
+          "port_number": 0
+        },
+        "target": {
+          "node_id": "edge-router",
+          "adapter_number": 0,
+          "port_number": 0
+        },
+        "label": "WAN · BGP · 834 Mbps (31.2%)",
+        "bandwidth": 834
+      },
+      {
+        "link_id": "edge-fw",
+        "source": {
+          "node_id": "edge-router",
+          "adapter_number": 0,
+          "port_number": 1
+        },
+        "target": {
+          "node_id": "firewall",
+          "adapter_number": 0,
+          "port_number": 0
+        },
+        "label": "Edge → FW · 812 Mbps (29.8%)",
+        "bandwidth": 812
+      },
+      {
+        "link_id": "fw-core",
+        "source": {
+          "node_id": "firewall",
+          "adapter_number": 0,
+          "port_number": 1
+        },
+        "target": {
+          "node_id": "core-router",
+          "adapter_number": 0,
+          "port_number": 0
+        },
+        "label": "FW → Core · 798 Mbps (27.4%)",
+        "bandwidth": 798
+      },
+      {
+        "link_id": "core-router-switch",
+        "source": {
+          "node_id": "core-router",
+          "adapter_number": 0,
+          "port_number": 1
+        },
+        "target": {
+          "node_id": "core-switch",
+          "adapter_number": 0,
+          "port_number": 0
+        },
+        "label": "Core Router ↔ Core Switch"
+      },
+      {
+        "link_id": "core-acc1",
+        "source": {
+          "node_id": "core-switch",
+          "adapter_number": 0,
+          "port_number": 1
+        },
+        "target": {
+          "node_id": "acc-switch-1",
+          "adapter_number": 0,
+          "port_number": 0
+        },
+        "label": "Core ↔ ACC01"
+      },
+      {
+        "link_id": "core-acc2",
+        "source": {
+          "node_id": "core-switch",
+          "adapter_number": 0,
+          "port_number": 2
+        },
+        "target": {
+          "node_id": "acc-switch-2",
+          "adapter_number": 0,
+          "port_number": 0
+        },
+        "label": "Core ↔ ACC02"
+      },
+      {
+        "link_id": "core-acc3",
+        "source": {
+          "node_id": "core-switch",
+          "adapter_number": 0,
+          "port_number": 3
+        },
+        "target": {
+          "node_id": "acc-switch-3",
+          "adapter_number": 0,
+          "port_number": 0
+        },
+        "label": "Core ↔ ACC03"
+      },
+      {
+        "link_id": "acc1-vlan10",
+        "source": {
+          "node_id": "acc-switch-1",
+          "adapter_number": 0,
+          "port_number": 1
+        },
+        "target": {
+          "node_id": "vlan10-it",
+          "adapter_number": 0,
+          "port_number": 0
+        },
+        "label": "VLAN 10 · 318 Mbps (44.1%)",
+        "bandwidth": 318
+      },
+      {
+        "link_id": "acc1-vlan20",
+        "source": {
+          "node_id": "acc-switch-1",
+          "adapter_number": 0,
+          "port_number": 2
+        },
+        "target": {
+          "node_id": "vlan20-finance",
+          "adapter_number": 0,
+          "port_number": 0
+        },
+        "label": "VLAN 20 · 156 Mbps (38.6%)",
+        "bandwidth": 156
+      },
+      {
+        "link_id": "acc2-vlan30",
+        "source": {
+          "node_id": "acc-switch-2",
+          "adapter_number": 0,
+          "port_number": 1
+        },
+        "target": {
+          "node_id": "vlan30-hr",
+          "adapter_number": 0,
+          "port_number": 0
+        },
+        "label": "VLAN 30 · 94 Mbps (22.3%)",
+        "bandwidth": 94
+      },
+      {
+        "link_id": "acc2-vlan40",
+        "source": {
+          "node_id": "acc-switch-2",
+          "adapter_number": 0,
+          "port_number": 2
+        },
+        "target": {
+          "node_id": "vlan40-admin",
+          "adapter_number": 0,
+          "port_number": 0
+        },
+        "label": "VLAN 40 · 201 Mbps (35.0%)",
+        "bandwidth": 201
+      },
+      {
+        "link_id": "acc3-vlan50",
+        "source": {
+          "node_id": "acc-switch-3",
+          "adapter_number": 0,
+          "port_number": 1
+        },
+        "target": {
+          "node_id": "vlan50-smart",
+          "adapter_number": 0,
+          "port_number": 0
+        },
+        "label": "VLAN 50 · 267 Mbps (52.7%)",
+        "bandwidth": 267
+      }
+    ]
+  },
+  "drawings": [
+    {
+      "drawing_id": "title-1",
+      "x": 50,
+      "y": 10,
+      "text": "Maziin Smart City Network - Muscat, Oman",
+      "font_size": 14,
+      "font_color": "#000000"
+    },
+    {
+      "drawing_id": "legend-1",
+      "x": 50,
+      "y": 600,
+      "text": "Core Network: 2 Routers | 4 Switches | 5 VLANs | ~200 Total Devices",
+      "font_size": 10,
+      "font_color": "#666666"
+    }
+  ],
+  "notes": {
+    "lab_info": "Smart city network simulation for security operations lab. Represents enterprise network infrastructure with VLANs for different departments.",
+    "vlan_config": "VLAN 10: IT (45 dev) | VLAN 20: Finance (42 dev) | VLAN 30: HR (36 dev) | VLAN 40: Admin (30 dev) | VLAN 50: Smart Infra (47 dev)",
+    "traffic_profile": "North-South: 834 Mbps WAN | East-West: ~1000 Mbps inter-VLAN"
+  }
+}
